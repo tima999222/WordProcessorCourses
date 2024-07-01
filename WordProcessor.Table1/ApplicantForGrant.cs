@@ -20,33 +20,29 @@ namespace WordProcessor.Table1
         /// </summary>
         /// <param name="list">Сгруппированные по ИНН данные для вордов</param>
         /// <returns>Массив байтов которые можно сохранить в зип архив</returns>
-        public static byte[]? CreateApplicationsForOrder(List<IGrouping<string, DataForWord>> list)
+        public static byte[]? CreateApplicationsForOrder(List<IGrouping<string, DataForWord>> list, string zipPath)
         {
             if (!list.Any()) return null;
 
             byte[] docTemplate = null;
-
             var path = Path.Combine(Assembly.GetExecutingAssembly().Directory(), "template.docx");
             using (var s = File.OpenRead(path))
             {
                 docTemplate = s.ReadFully(); // считывает шаблон
             }
 
-            byte[] compressedBytes; 
-            using (var memoryStream = new MemoryStream())
+            using (var fileStream = new FileStream(zipPath, FileMode.OpenOrCreate)) // Открываем или создаем архив
             {
-                using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true)) // создание архива
+                using (var archive =
+                       new ZipArchive(fileStream, ZipArchiveMode.Update))
                 {
-                    foreach (var d in list.AsParallel().WithDegreeOfParallelism(8)) //проходимся по списку 
+                    foreach (var d in list.AsParallel().WithDegreeOfParallelism(8))
                     {
                         var docProcessor = new DocumentProcessor(docTemplate);
-
-                        var fileName =
-                            $"{d.Key}".Replace("/", "_");
-
-                        docProcessor.Map(d.First()); // должен мапить все встреченные в тексте плейсхолдеры на значения
-                        docProcessor.MapItems(d.First().TrainedStudents); // мапит таблички
-                        docProcessor.MapItems(d.First().Events); // мапит таблички
+                        var fileName = $"{d.Key}".Replace("/", "_");
+                        docProcessor.Map(d.First());
+                        docProcessor.MapItems(d.First().TrainedStudents);
+                        docProcessor.MapItems(d.First().Events);
 
                         var fileInArchive = archive.CreateEntry(fileName + ".docx", CompressionLevel.Optimal);
                         using (var entryStream = fileInArchive.Open())
@@ -55,13 +51,9 @@ namespace WordProcessor.Table1
                             fileToCompressStream.CopyTo(entryStream);
                         }
                     }
-
-                    compressedBytes = memoryStream.ToArray();
                 }
-
-                return compressedBytes;
             }
+            return File.ReadAllBytes(zipPath);
         }
     }
 }
-

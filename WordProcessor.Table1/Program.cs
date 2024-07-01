@@ -32,15 +32,18 @@ else
     groupedData = GroupData(dataFromDB);
 }
 
-logger.Information("Creating file(s)...");
-var result = ApplicantForGrant.CreateApplicationsForOrder(groupedData);
-if (result != null)
+if (groupedData != null && groupedData.Any())
 {
-    File.WriteAllBytes(Assembly.GetExecutingAssembly().Directory() + "/documents.zip",
-        result); //zip спавнится в папке bin
-    foreach (var data in groupedData)
-    logger.Information("File [{contractNumber}] added to archive", data.Key + ".docx");
+    logger.Information("Creating file(s)...");
+    var zipPath = Assembly.GetExecutingAssembly().Directory() + "/documents.zip";
+    var result = ApplicantForGrant.CreateApplicationsForOrder(groupedData, zipPath);
+    if (result != null)
+    {
+        foreach (var data in groupedData)
+            logger.Information("File [{contractNumber}] added to archive", data.Key + ".docx");
+    }
 }
+
 
 
 // для тестовых данных
