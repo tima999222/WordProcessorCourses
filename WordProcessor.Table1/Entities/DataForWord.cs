@@ -14,15 +14,17 @@ namespace WordProcessor.Table1.Entities
             
         }
 
-        public DataForWord(string contractNumber, List<TrainedStudent> trainedStudents, List<Event> events)
+        public DataForWord(string contractNumber, List<TrainedStudent> trainedStudents, List<Event> events, List<Startup> startups)
         {
             ContractNumber = contractNumber;
             TrainedStudents = trainedStudents;
             Events = events;
+            Startups = startups;
         }
 
         public string ContractNumber { get; set; }
         public List<TrainedStudent> TrainedStudents { get; set; }
         public List<Event> Events { get; set; }
+        public List<Startup> Startups { get; set; }
     }
 }

@@ -4,7 +4,6 @@ using WordProcessor.Table1;
 using WordProcessor.Table1.Entities;
 using Serilog;
 using Serilog.Core;
-using Serilog.Sinks.SystemConsole;
 
 var logger = ConfigureLogger();
 
@@ -13,45 +12,49 @@ logger.Information("Starting Up");
 var contractNumber = "70-2023-000622";
 
 logger.Information("Trying to get data from database for contract with number [{contractNumber}]", contractNumber);
-var dataFromDB = GetDataFromDatabase(contractNumber, logger);
-logger.Information("Got data for contract with number [{contractNumber}]", contractNumber);
+List<DataForWord> dataFromDB = null;//GetDataFromDatabase(contractNumber, logger);
 
 
-var testData = GenerateTestData();
+List<DataForWord> testData = null;
 
 var groupedData = new List<IGrouping<string, DataForWord>>();
 
-logger.Information("Grouping data...");
-if (!dataFromDB.Any())
+
+if (dataFromDB == null || !dataFromDB.Any())
 {
+    logger.Information("Could not get data for contract with number [{contractNumber}]", contractNumber);
+    testData = GenerateTestData(logger);
     groupedData = GroupData(testData);
 }
 else
 {
-   
+    logger.Information("Got data for contract with number [{contractNumber}]", contractNumber);
     groupedData = GroupData(dataFromDB);
 }
-logger.Information("Data grouped successfully");
 
-logger.Information("Creating file...");
+logger.Information("Creating file(s)...");
 var result = ApplicantForGrant.CreateApplicationsForOrder(groupedData);
 if (result != null)
 {
     File.WriteAllBytes(Assembly.GetExecutingAssembly().Directory() + "/documents.zip",
         result); //zip спавнится в папке bin
-    logger.Information("File [{contractNumber}.docx] added to archive", contractNumber);
+    foreach (var data in groupedData)
+    logger.Information("File [{contractNumber}] added to archive", data.Key + ".docx");
 }
 
 
 // для тестовых данных
-static List<DataForWord> GenerateTestData()
+static List<DataForWord> GenerateTestData(Logger logger)
 {
+    logger.Information("Generating test data...");
     var random = new Random();
     var dataList = new List<DataForWord>();
 
     for (int i = 0; i < 5; i++)
     {
         var contractNumber = $"CN-{random.Next(1000, 9999)}";
+        logger.Information("Generated contract number [{contract}]", contractNumber);
+       
         var trainedStudents = new List<TrainedStudent>();
         var events = new List<Event>();
 
@@ -70,6 +73,8 @@ static List<DataForWord> GenerateTestData()
                 LeaderIdNumber = $"LIDN-{random.Next(1000, 9999)}"
             });
         }
+        logger.Information("Generated [{count}] events", events.Count);
+
 
         for (int k = 0; k < random.Next(1, 10); k++)
         {
@@ -85,8 +90,36 @@ static List<DataForWord> GenerateTestData()
                 Link = $"http://startuplink.com/{studentNumber}"
             });
         }
+        logger.Information("Generated [{count}] participants", trainedStudents.Count);
+        
+        var startups = new List<Startup>();
+        for (int l = 0; l < 10; l++)
+        {
+            var participants = new List<Participant>();
+            for (int m = 0; m < random.Next(1, 10); m++)
+            {
+                participants.Add(new Participant
+                {
+                    Number = m + 1,
+                    Name = $"Participant-{m + 1}",
+                    LeaderID = $"LID-{random.Next(1000, 9999)}",
+                    EventIDs = String.Join(", ", Enumerable.Range(0, random.Next(1, 5)).Select(x => random.Next(1000, 9999).ToString()))
+                });
+            }
 
-        dataList.Add(new DataForWord(contractNumber, trainedStudents, events));
+            startups.Add(new Startup
+            {
+                Number = l + 1,
+                Name = $"Startup-{l + 1}",
+                Link = $"http://startuplink.com/{i + 1}",
+                HasSign = String.Empty,
+                Category = String.Empty,
+                Participants = participants
+            });
+        }
+        logger.Information("Generated [{count}] startups", startups.Count);
+        
+        dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups));
     }
 
     return dataList;
@@ -97,6 +130,7 @@ static List<DataForWord> GetDataFromDatabase(string contractNumber, Logger logge
     var dataList = new List<DataForWord>();
     var trainedStudents = new List<TrainedStudent>();
     var events = new List<Event>();
+    var startups = new List<Startup>();
     
 
     logger.Information("Getting participants...");
@@ -107,7 +141,11 @@ static List<DataForWord> GetDataFromDatabase(string contractNumber, Logger logge
     events = Connection.GetEventsForContract(contractNumber);
     logger.Information("Got data about [{count}] events", events.Count);
     
-    dataList.Add(new DataForWord(contractNumber, trainedStudents, events));
+    logger.Information("Getting startups...");
+    startups = Connection.GetStartupsForContract(contractNumber);
+    logger.Information("Got data about [{count}] startups", startups.Count);
+    
+    dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups));
     
     return dataList;
 }

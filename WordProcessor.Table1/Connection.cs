@@ -44,8 +44,6 @@ public static class Connection
 
         return participants;
     }
-    
-    
     public static List<Event> GetEventsForContract(string contractNumber)
     {
         List<Event> events = new List<Event>();
@@ -82,5 +80,90 @@ public static class Connection
         con.Close();
 
         return events;
+    }
+    
+    public static List<Startup> GetStartupsForContract(string contractNumber)
+    {
+        List<Startup> startups = new List<Startup>();
+
+        string cmdString = "GetStartupsForContract";
+
+        SqlConnection con = new SqlConnection(conString);
+
+        SqlCommand cmd = new SqlCommand(cmdString, con);
+
+        cmd.CommandType = CommandType.StoredProcedure;
+        
+        SqlParameter idParam = new SqlParameter
+        {
+            ParameterName = "@id",
+            Value = contractNumber
+        };
+        cmd.Parameters.Add(idParam);
+        
+        con.Open();
+
+        SqlDataReader reader = cmd.ExecuteReader();
+
+        var startupID = 1;
+        
+        while (reader.Read())
+        {
+            Startup s = new Startup();
+            s.Number = startupID;
+            var startupIDForProcedure = Convert.ToInt32(reader[0]);
+            s.Name = reader[1].ToString();
+            s.Link = reader[2].ToString();
+            s.HasSign = "";
+            s.Category = "";
+            s.Participants = GetParticipantsForStartup(startupIDForProcedure);
+            startupID++;
+            startups.Add(s);
+        }
+
+        con.Close();
+
+        return startups;
+    }
+    
+    public static List<Participant> GetParticipantsForStartup(int startupID)
+    {
+        List<Participant> participants = new List<Participant>();
+
+        string cmdString = "GetParticipantsForStartup";
+
+        SqlConnection con = new SqlConnection(conString);
+
+        SqlCommand cmd = new SqlCommand(cmdString, con);
+
+        cmd.CommandType = CommandType.StoredProcedure;
+        
+        SqlParameter idParam = new SqlParameter
+        {
+            ParameterName = "@id",
+            Value = startupID
+        };
+        cmd.Parameters.Add(idParam);
+        
+        con.Open();
+
+        SqlDataReader reader = cmd.ExecuteReader();
+
+        var participantID = 1;
+        
+        while (reader.Read())
+        {
+            Participant p = new Participant();
+            p.Number = participantID;
+            p.Name = reader[1].ToString();
+            p.LeaderID = reader[2].ToString();
+            p.EventIDs = reader[3].ToString();
+            participantID++;
+            participants.Add(p);
+        }
+
+        con.Close();
+
+        return participants;
     }
 }
