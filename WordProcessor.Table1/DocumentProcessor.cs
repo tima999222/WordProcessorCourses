@@ -85,7 +85,7 @@ namespace ASTepanov.Docx
                 {
                     if (!(actionChildElement is Text)) continue;
 
-                    var text = (Text) actionChildElement;
+                    var text = (Text)actionChildElement;
                     textAction(text);
                 }
             });
@@ -149,84 +149,50 @@ namespace ASTepanov.Docx
             });
         }
 
-        public void MapItems<T>(IEnumerable<T> value)
+        public void MapItems<T>(IEnumerable<T> items)
         {
-            if (!value.Any()) return;
+            if (!items.Any()) return;
 
-            var itemType = value.First().GetType();
-            var itemTypeBeginMappingKey = "{" + itemType.Name;
+            var itemType = items.First().GetType();
+            var itemTypeBeginMappingKey = "{" + itemType.Name + ".";
+
             ProcessEach(e =>
             {
-                var table = e as Table;
-                var isTable = table is Table;
-                if (!isTable) return;
+                if (!(e is Table table)) return;
 
-                var secondOrDefault = table.Rows().SecondOrDefault();
-                if (secondOrDefault == null) return;
-                if (!secondOrDefault.InnerText.Contains(itemTypeBeginMappingKey)) return; //
+                var secondRow = table.Elements<TableRow>().Skip(2).FirstOrDefault();
+                if (secondRow == null || !secondRow.InnerText.Contains(itemTypeBeginMappingKey)) return;
 
-                var hasTail = table.Rows().Count() > 2;
+                var templateRow = secondRow.CloneNode(true) as TableRow;
+                secondRow.Remove();
 
-                var rowTail = table.Rows().Skip(2)
-                    .Where(r => !r.InnerText.Contains("{"))
-                    .Select(r => r.CloneNode(true)).ToList();
-
-                if (hasTail)
-                    foreach (var tableRow in table.Rows().Skip(2))
-                        //удалить хвост
-                        tableRow.Remove();
-                //todo: если строка содержит элементы для маппинга-только тогда маппим!
-
-                var secondLine = secondOrDefault?.CloneNode(true) as TableRow;
-                if (!secondLine.InnerText.Contains(itemTypeBeginMappingKey)) return; //
-                secondOrDefault.Remove();
-
-                var bindedCount = 0;
-
-                foreach (var v in value)
+                foreach (var item in items)
                 {
-                    //Для кажждой строки - создай строку в таблице 
-                    var propertyValues = new Dictionary<string, string>();
-                    //свойства и их значения для конкретной строки данных
+                    var newRow = (TableRow)templateRow.CloneNode(true);
+                    var propertyValues = itemType.GetProperties()
+                        .ToDictionary(
+                            prop => itemTypeBeginMappingKey + prop.Name + "}",
+                            prop => prop.GetValue(item)?.ToString() ?? string.Empty
+                        );
 
-                    v.GetProperties()
-                        .Select(p =>
-                            new KeyValuePair<string, string>("{" + itemType.Name + "." + p.Key + "}",
-                                p.Value?.ToString())).ToList()
-                        .ForEach(kvp => propertyValues.Add(kvp.Key, kvp.Value));
-
-                    var tr = new TableRow();
-                    foreach (var cells in secondLine)
+                    foreach (var cell in newRow.Elements<TableCell>())
                     {
-                        //Для каждой ячейки-создать ячейку с данными из строки dataline
-
-                        var cell = cells as TableCell;
-                        var innerText = cell.InnerText;
-
-                        if (!propertyValues.ContainsKey(innerText))
+                        var cellText = cell.InnerText.Trim();
+                        if (propertyValues.TryGetValue(cellText, out var value))
                         {
-                            tr.Append(cell.CloneNode(true));
-                            //скопировать исходное состояние в новую ячейку, если свойства под нее нет
-                            continue;
+                            // Очистка содержимого ячейки
+                            cell.RemoveAllChildren<Paragraph>();
+                            // Создание нового параграфа и Run
+                            var newParagraph = new Paragraph();
+                            var newRun = new Run();
+                            newRun.Append(new Text(value));
+                            newParagraph.Append(newRun);
+                            cell.Append(newParagraph);
                         }
-
-                        ++bindedCount;
-                        //если указано имя своЙства
-                        var tableCellProps = cell.TableCellProperties.CloneNode(true);
-                        var newCellParps = new Paragraph(new Run(new Text(propertyValues[innerText])));
-                        // //todo:Здесь будет тull reference tсли свойство null
-                        var newCell = new TableCell(tableCellProps, newCellParps);
-
-                        tr.Append(newCell);
                     }
 
-                    table.Append(tr);
+                    table.Append(newRow);
                 }
-
-                if (hasTail)
-                    foreach (TableRow tailRow in rowTail)
-                        //удалить хвост
-                        table.Append(tailRow);
             });
         }
     }
