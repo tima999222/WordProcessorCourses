@@ -2,28 +2,44 @@
 using System.Reflection;
 using WordProcessor.Table1;
 using WordProcessor.Table1.Entities;
+using Serilog;
+using Serilog.Core;
+using Serilog.Sinks.SystemConsole;
+
+var logger = ConfigureLogger();
+
+logger.Information("Starting Up");
+
+var contractNumber = "70-2023-000622";
+
+logger.Information("Trying to get data from database for contract with number [{contractNumber}]", contractNumber);
+var dataFromDB = GetDataFromDatabase(contractNumber, logger);
+logger.Information("Got data for contract with number [{contractNumber}]", contractNumber);
 
 
-var dataFromDB = GetDataFromDatabase();
 var testData = GenerateTestData();
 
 var groupedData = new List<IGrouping<string, DataForWord>>();
 
+logger.Information("Grouping data...");
 if (!dataFromDB.Any())
 {
     groupedData = GroupData(testData);
 }
 else
 {
+   
     groupedData = GroupData(dataFromDB);
 }
+logger.Information("Data grouped successfully");
 
-
+logger.Information("Creating file...");
 var result = ApplicantForGrant.CreateApplicationsForOrder(groupedData);
 if (result != null)
 {
     File.WriteAllBytes(Assembly.GetExecutingAssembly().Directory() + "/documents.zip",
         result); //zip спавнится в папке bin
+    logger.Information("File [{contractNumber}.docx] added to archive", contractNumber);
 }
 
 
@@ -76,18 +92,20 @@ static List<DataForWord> GenerateTestData()
     return dataList;
 }
 
-//TODO: Сделать, чтобы все договоры по очереди перебирались
-static List<DataForWord> GetDataFromDatabase()
+static List<DataForWord> GetDataFromDatabase(string contractNumber, Logger logger)
 {
     var dataList = new List<DataForWord>();
-    
-    var contractNumber = "70-2023-000622";
     var trainedStudents = new List<TrainedStudent>();
     var events = new List<Event>();
+    
 
-
+    logger.Information("Getting participants...");
     trainedStudents = Connection.GetParticipantsForContract(contractNumber);
+    logger.Information("Got data about [{count}] participants", trainedStudents.Count);
+    
+    logger.Information("Getting events...");
     events = Connection.GetEventsForContract(contractNumber);
+    logger.Information("Got data about [{count}] events", events.Count);
     
     dataList.Add(new DataForWord(contractNumber, trainedStudents, events));
     
@@ -97,4 +115,12 @@ static List<DataForWord> GetDataFromDatabase()
 static List<IGrouping<string, DataForWord>> GroupData(List<DataForWord> testData)
 {
     return testData.GroupBy(data => data.ContractNumber).ToList();
+}
+
+static Logger ConfigureLogger()
+{
+    return new LoggerConfiguration()
+        .MinimumLevel.Debug()
+        .WriteTo.Console()
+        .CreateLogger();
 }
