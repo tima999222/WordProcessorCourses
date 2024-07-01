@@ -15,10 +15,4 @@
     <ProjectReference Include="..\AStepanov.Core\AStepanov.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <None Update="template.docx">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-
 </Project>

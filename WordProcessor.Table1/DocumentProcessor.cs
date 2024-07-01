@@ -43,7 +43,7 @@ namespace ASTepanov.Docx
 
             foreach (var keyValuePair in props)
             {
-                var propKey = "{" + $"{value.GetType().Name}.{keyValuePair.Key}" + "}"; //ключ для замены
+                var propKey = $"{value.GetType().Name}.{keyValuePair.Key}"; //ключ для замены
                 var strValue = string.Empty;
 
 
