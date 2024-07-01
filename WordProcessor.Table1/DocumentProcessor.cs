@@ -149,7 +149,7 @@ namespace ASTepanov.Docx
             });
         }
 
-        public void MapItems<T>(IEnumerable<T> items)
+        public void MapItems<T>(IEnumerable<T> items, int rowSkips)
         {
             if (!items.Any()) return;
 
@@ -160,7 +160,7 @@ namespace ASTepanov.Docx
             {
                 if (!(e is Table table)) return;
 
-                var secondRow = table.Elements<TableRow>().Skip(2).FirstOrDefault();
+                var secondRow = table.Elements<TableRow>().Skip(rowSkips).FirstOrDefault();
                 if (secondRow == null || !secondRow.InnerText.Contains(itemTypeBeginMappingKey)) return;
 
                 var templateRow = secondRow.CloneNode(true) as TableRow;

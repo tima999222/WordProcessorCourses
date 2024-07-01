@@ -41,8 +41,13 @@ namespace WordProcessor.Table1
                         var docProcessor = new DocumentProcessor(docTemplate);
                         var fileName = $"{d.Key}".Replace("/", "_");
                         docProcessor.Map(d.First());
-                        docProcessor.MapItems(d.First().TrainedStudents);
-                        docProcessor.MapItems(d.First().Events);
+                        docProcessor.MapItems(d.First().TrainedStudents, 2);
+                        docProcessor.MapItems(d.First().Events, 2);
+                        
+                        //Error Tables
+                        docProcessor.MapItems(d.First().Error1, 3);
+                        docProcessor.MapItems(d.First().Error2, 3);
+                        docProcessor.MapItems(d.First().Error3, 3);
 
                         var fileInArchive = archive.CreateEntry(fileName + ".docx", CompressionLevel.Optimal);
                         using (var entryStream = fileInArchive.Open())

@@ -12,7 +12,7 @@ logger.Information("Starting Up");
 var contractNumber = "70-2023-000622";
 
 logger.Information("Trying to get data from database for contract with number [{contractNumber}]", contractNumber);
-List<DataForWord> dataFromDB = null;//GetDataFromDatabase(contractNumber, logger);
+List<DataForWord> dataFromDB = null; //GetDataFromDatabase(contractNumber, logger);
 
 
 List<DataForWord> testData = null;
@@ -45,19 +45,19 @@ if (groupedData != null && groupedData.Any())
 }
 
 
-
 // для тестовых данных
 static List<DataForWord> GenerateTestData(Logger logger)
 {
     logger.Information("Generating test data...");
     var random = new Random();
+    var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     var dataList = new List<DataForWord>();
 
     for (int i = 0; i < 5; i++)
     {
         var contractNumber = $"CN-{random.Next(1000, 9999)}";
         logger.Information("Generated contract number [{contract}]", contractNumber);
-       
+
         var trainedStudents = new List<TrainedStudent>();
         var events = new List<Event>();
 
@@ -76,6 +76,7 @@ static List<DataForWord> GenerateTestData(Logger logger)
                 LeaderIdNumber = $"LIDN-{random.Next(1000, 9999)}"
             });
         }
+
         logger.Information("Generated [{count}] events", events.Count);
 
 
@@ -93,10 +94,11 @@ static List<DataForWord> GenerateTestData(Logger logger)
                 Link = $"http://startuplink.com/{studentNumber}"
             });
         }
+
         logger.Information("Generated [{count}] participants", trainedStudents.Count);
-        
+
         var startups = new List<Startup>();
-        for (int l = 0; l < 10; l++)
+        for (int l = 0; l < random.Next(1, 10); l++)
         {
             var participants = new List<Participant>();
             for (int m = 0; m < random.Next(1, 10); m++)
@@ -106,7 +108,8 @@ static List<DataForWord> GenerateTestData(Logger logger)
                     Number = m + 1,
                     Name = $"Participant-{m + 1}",
                     LeaderID = $"LID-{random.Next(1000, 9999)}",
-                    EventIDs = String.Join(", ", Enumerable.Range(0, random.Next(1, 5)).Select(x => random.Next(1000, 9999).ToString()))
+                    EventIDs = String.Join(", ",
+                        Enumerable.Range(0, random.Next(1, 5)).Select(x => random.Next(1000, 9999).ToString()))
                 });
             }
 
@@ -120,9 +123,64 @@ static List<DataForWord> GenerateTestData(Logger logger)
                 Participants = participants
             });
         }
+
         logger.Information("Generated [{count}] startups", startups.Count);
         
-        dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups));
+        var errors1 = new List<ErrorTable1>();
+        for (int n = 0; n < random.Next(1, 10); n++)
+        {
+            var leaderIDNumber = random.Next(1000, 9999);
+            errors1.Add(new ErrorTable1()
+            {
+                Number = n + 1,
+                Name = $"Student-{leaderIDNumber}",
+                LeaderLink = $"https://leader-id.ru/users/{leaderIDNumber}",
+                Reason = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
+                Documents = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
+                Remark = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
+                Comment = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray())
+            });
+        }
+        
+        logger.Information("Generated [{count}] errors for table 1", errors1.Count);
+        
+        var errors2 = new List<ErrorTable2>();
+        for (int o = 0; o < random.Next(1, 10); o++)
+        {
+            var eventNumber = random.Next(1000, 9999);
+            errors2.Add(new ErrorTable2()
+            {
+                Number = o + 1,
+                Name = $"Event-{eventNumber}",
+                LeaderLink = $"https://leader-id.ru/events/{eventNumber}",
+                Reason = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
+                Documents = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
+                Remark = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
+                Comment = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray())
+            });
+        }
+        
+        logger.Information("Generated [{count}] errors for table 2", errors2.Count);
+        
+        var errors3 = new List<ErrorTable3>();
+        for (int p = 0; p < random.Next(1, 10); p++)
+        {
+            var startupNumber = random.Next(1000, 9999);
+            errors3.Add(new ErrorTable3()
+            {
+                Number = p + 1,
+                Name = $"Startup-{startupNumber}",
+                Link = $"https://pt.2035.university/project/{startupNumber}",
+                Reason = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
+                Documents = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
+                Remark = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
+                Comment = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray())
+            });
+        }
+        
+        logger.Information("Generated [{count}] errors for table 3", errors3.Count);
+
+        dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups, errors1, errors2, errors3));
     }
 
     return dataList;
@@ -134,22 +192,26 @@ static List<DataForWord> GetDataFromDatabase(string contractNumber, Logger logge
     var trainedStudents = new List<TrainedStudent>();
     var events = new List<Event>();
     var startups = new List<Startup>();
-    
+
+    var errors1 = new List<ErrorTable1>();
+    var errors2 = new List<ErrorTable2>();
+    var errors3 = new List<ErrorTable3>();
+
 
     logger.Information("Getting participants...");
     trainedStudents = Connection.GetParticipantsForContract(contractNumber);
     logger.Information("Got data about [{count}] participants", trainedStudents.Count);
-    
+
     logger.Information("Getting events...");
     events = Connection.GetEventsForContract(contractNumber);
     logger.Information("Got data about [{count}] events", events.Count);
-    
+
     logger.Information("Getting startups...");
     startups = Connection.GetStartupsForContract(contractNumber);
     logger.Information("Got data about [{count}] startups", startups.Count);
-    
-    dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups));
-    
+
+    dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups, errors1, errors2, errors3));
+
     return dataList;
 }
 
