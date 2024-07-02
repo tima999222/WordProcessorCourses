@@ -12,7 +12,7 @@ logger.Information("Starting Up");
 var contractNumber = "70-2023-000622";
 
 logger.Information("Trying to get data from database for contract with number [{contractNumber}]", contractNumber);
-List<DataForWord> dataFromDB = GetDataFromDatabase(contractNumber, logger);
+List<DataForWord> dataFromDB = null;//GetDataFromDatabase(contractNumber, logger);
 
 
 List<DataForWord> testData = null;
@@ -104,7 +104,6 @@ static List<DataForWord> GenerateTestData(Logger logger)
             {
                 participants.Add(new Participant
                 {
-                    Number = m + 1,
                     Name = $"Participant-{m + 1}",
                     LeaderID = $"LID-{random.Next(1000, 9999)}",
                     EventIDs = String.Join(", ",
@@ -202,11 +201,11 @@ static List<DataForWord> GetDataFromDatabase(string contractNumber, Logger logge
     logger.Information("Got data about [{count}] participants", trainedStudents.Count);
 
     logger.Information("Getting events...");
-    events = Connection.GetEventsForContract(contractNumber);
+    //events = Connection.GetEventsForContract(contractNumber);
     logger.Information("Got data about [{count}] events", events.Count);
 
     logger.Information("Getting startups...");
-    //startups = Connection.GetStartupsForContract(contractNumber);
+    startups = Connection.GetStartupsForContract(contractNumber);
     logger.Information("Got data about [{count}] startups", startups.Count);
 
     dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups, errors1, errors2, errors3));

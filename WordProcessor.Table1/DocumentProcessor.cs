@@ -4,6 +4,9 @@ using AStepanov.Core.Ex;
 using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
+using WordProcessor.Table1.Entities;
+using Cell = DocumentFormat.OpenXml.Spreadsheet.Cell;
+using RowFields = DocumentFormat.OpenXml.Spreadsheet.RowFields;
 
 #endregion
 
@@ -180,11 +183,19 @@ namespace ASTepanov.Docx
                         var cellText = cell.InnerText.Trim();
                         if (propertyValues.TryGetValue(cellText, out var value))
                         {
-                            // Очистка содержимого ячейки
                             cell.RemoveAllChildren<Paragraph>();
-                            // Создание нового параграфа и Run
                             var newParagraph = new Paragraph();
+                            
+                            ParagraphProperties paraProperties = new ParagraphProperties();
+                            paraProperties.Justification = new Justification() { Val = JustificationValues.Center };
+                            newParagraph.PrependChild(paraProperties);
+                            
                             var newRun = new Run();
+                            
+                            RunProperties runProperties = new RunProperties();
+                            runProperties.Append(new FontSize(){ Val = "16" });
+                            newRun.Append(runProperties);
+                            
                             newRun.Append(new Text(value));
                             newParagraph.Append(newRun);
                             cell.Append(newParagraph);
@@ -194,6 +205,121 @@ namespace ASTepanov.Docx
                     table.Append(newRow);
                 }
             });
+        }
+
+        public void MapItemsOther<T>(IEnumerable<T> items, int rowSkips)
+        {
+            if (!items.Any()) return;
+
+            var itemType = items.First().GetType();
+            var itemTypeBeginMappingKey = "{" + itemType.Name + ".";
+
+            ProcessEach(e =>
+            {
+                if (!(e is Table table)) return;
+
+                var secondRow = table.Elements<TableRow>().Skip(rowSkips).FirstOrDefault();
+                if (secondRow == null || !secondRow.InnerText.Contains(itemTypeBeginMappingKey)) return;
+
+                var templateRow = secondRow.CloneNode(true) as TableRow;
+                secondRow.Remove();
+
+                foreach (var item in items)
+                {
+                    var newRow = (TableRow)templateRow.CloneNode(true);
+                    var propertyValues = itemType.GetProperties()
+                        .Where(prop => prop.Name != "Participants")
+                        .ToDictionary(
+                            prop => itemTypeBeginMappingKey + prop.Name + "}",
+                            prop => prop.GetValue(item)?.ToString() ?? string.Empty
+                        );
+
+                    // Обработка обычных столбцов
+                    for (int i = 0; i < 5; i++)
+                    {
+                        var cell = newRow.Elements<TableCell>().ElementAt(i);
+                        var cellText = cell.InnerText.Trim();
+                        if (propertyValues.TryGetValue(cellText, out var value))
+                        {
+                            Paragraph para = cell.Elements<Paragraph>().First();
+                            
+                            ParagraphProperties paraProperties = new ParagraphProperties();
+                            paraProperties.Justification = new Justification() { Val = JustificationValues.Center };
+                            para.PrependChild(paraProperties);
+                            
+                            RunProperties runProperties = new RunProperties();
+                            runProperties.FontSize = new FontSize() { Val = "16" }; // Размер шрифта 12pt
+                            Run run = new Run();
+                            run.Append(runProperties);
+                            Text text = new Text(value);
+                            run.Append(text);
+                            para.RemoveAllChildren<Run>();
+                            para.Append(run);
+                        }
+                    }
+
+                    // Обработка столбцов с участниками
+                    if (item is Startup startup && startup.Participants != null)
+                    {
+                        var participantsProperties = typeof(Participant).GetProperties()
+                            .ToDictionary(
+                                prop => itemTypeBeginMappingKey + "Participants." + prop.Name + "}",
+                                prop => string.Empty
+                            );
+
+                        for (int i = 5; i < 8; i++)
+                        {
+                            var cell = newRow.Elements<TableCell>().ElementAt(i);
+                            var cellText = cell.InnerText.Trim();
+
+                            // Проверяем, содержится ли текст ячейки в ключах словаря
+                            if (participantsProperties.ContainsKey(cellText))
+                            {
+                                cell.RemoveAllChildren<Paragraph>();
+
+                                foreach (var participant in startup.Participants)
+                                {
+                                    var newParagraph = new Paragraph();
+                                    
+                                    ParagraphProperties paraProperties = new ParagraphProperties();
+                                    paraProperties.Justification = new Justification() { Val = JustificationValues.Center };
+                                    newParagraph.PrependChild(paraProperties);
+                                    
+                                    var newRun = new Run();
+                                    
+                                    RunProperties runProperties = new RunProperties();
+                                    runProperties.Append(new FontSize(){ Val = "16" });
+                                    newRun.Append(runProperties);
+
+                                    var cleanCellText = cellText.Replace(itemTypeBeginMappingKey, "").Replace("Participants.", "").Replace("{", "").Replace("}", "");
+                                    var participantProperty = typeof(Participant).GetProperty(cleanCellText);
+                                    if (participantProperty != null)
+                                    {
+                                        var participantValue = participantProperty.GetValue(participant)?.ToString() ??
+                                                               string.Empty;
+                                        newRun.Append(new Text(participantValue));
+                                    }
+                                    
+                                    //TODO: ДОБАВЛЯТЬ НОВУЮ ЯЧЕЙКУ В ЯЧЕЙКУ (по умолчанию так нельзя)
+                                    newParagraph.Append(newRun);
+                                    cell.Append(newParagraph);
+                                }
+                            }
+                        }
+                    }
+                    table.Append(newRow);
+                }
+            });
+        }
+
+
+        private void ReplaceCellText(TableCell cell, string value)
+        {
+            cell.RemoveAllChildren<Paragraph>();
+            var newParagraph = new Paragraph();
+            var newRun = new Run(new Text(value));
+            newParagraph.Append(newRun);
+            cell.Append(newParagraph);
         }
     }
 }

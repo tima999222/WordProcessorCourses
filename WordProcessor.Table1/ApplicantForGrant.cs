@@ -48,6 +48,8 @@ namespace WordProcessor.Table1
                         docProcessor.MapItems(d.First().Error1, 3);
                         docProcessor.MapItems(d.First().Error2, 3);
                         docProcessor.MapItems(d.First().Error3, 3);
+                        
+                        docProcessor.MapItemsOther(d.First().Startups, 3);
 
                         var fileInArchive = archive.CreateEntry(fileName + ".docx", CompressionLevel.Optimal);
                         using (var entryStream = fileInArchive.Open())

@@ -148,17 +148,13 @@ public static class Connection
         con.Open();
 
         SqlDataReader reader = cmd.ExecuteReader();
-
-        var participantID = 1;
         
         while (reader.Read())
         {
             Participant p = new Participant();
-            p.Number = participantID;
             p.Name = reader[1].ToString();
             p.LeaderID = reader[2].ToString();
             p.EventIDs = reader[3].ToString();
-            participantID++;
             participants.Add(p);
         }
 
