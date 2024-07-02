@@ -48,7 +48,7 @@ public static class Connection
     {
         List<Event> events = new List<Event>();
 
-        string cmdString = "SELECT * FROM Table_2 WHERE VUZEventProviderINN = (SELECT INN FROM Accellerations WHERE ContractID = '" + contractNumber + "')";
+        string cmdString = "SELECT * FROM Table_2 WHERE VUZEventProviderINN = (SELECT INN FROM Accellerations WHERE ContractID = '" + contractNumber + "') ORDER BY StartDate ASC";
 
         SqlConnection con = new SqlConnection(conString);
 
@@ -69,7 +69,7 @@ public static class Connection
             e.Name = reader[0].ToString();
             e.LeaderId = reader[1].ToString();
             e.Link = reader[2].ToString();
-            e.DateStart = Convert.ToDateTime(reader[3]);
+            e.DateStart = Convert.ToDateTime(reader[3]).ToString("yyyy-MM-dd HH:mm");
             e.Format = reader[4].ToString();
             e.CountOfParticipants = Convert.ToInt64(reader[5]);
             e.LeaderIdNumber = reader[6].ToString();

@@ -12,7 +12,7 @@ logger.Information("Starting Up");
 var contractNumber = "70-2023-000622";
 
 logger.Information("Trying to get data from database for contract with number [{contractNumber}]", contractNumber);
-List<DataForWord> dataFromDB = null; //GetDataFromDatabase(contractNumber, logger);
+List<DataForWord> dataFromDB = GetDataFromDatabase(contractNumber, logger);
 
 
 List<DataForWord> testData = null;
@@ -50,7 +50,6 @@ static List<DataForWord> GenerateTestData(Logger logger)
 {
     logger.Information("Generating test data...");
     var random = new Random();
-    var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
     var dataList = new List<DataForWord>();
 
     for (int i = 0; i < 5; i++)
@@ -70,7 +69,7 @@ static List<DataForWord> GenerateTestData(Logger logger)
                 Name = $"Event-{eventNumber}",
                 LeaderId = $"LID-{random.Next(1000, 9999)}",
                 Link = $"http://eventlink.com/{eventNumber}",
-                DateStart = DateTime.Now.AddDays(random.Next(-30, 30)),
+                DateStart = DateTime.Now.AddDays(random.Next(-30, 30)).ToString("yyyy-MM-dd HH:mm"),
                 Format = "Online",
                 CountOfParticipants = random.Next(10, 100),
                 LeaderIdNumber = $"LIDN-{random.Next(1000, 9999)}"
@@ -135,10 +134,10 @@ static List<DataForWord> GenerateTestData(Logger logger)
                 Number = n + 1,
                 Name = $"Student-{leaderIDNumber}",
                 LeaderLink = $"https://leader-id.ru/users/{leaderIDNumber}",
-                Reason = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
-                Documents = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
-                Remark = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
-                Comment = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray())
+                Reason = GenerateRandomString(random.Next(1, 100)),
+                Documents = GenerateRandomString(random.Next(1, 100)),
+                Remark = GenerateRandomString(random.Next(1, 100)),
+                Comment = GenerateRandomString(random.Next(1, 100))
             });
         }
         
@@ -153,10 +152,10 @@ static List<DataForWord> GenerateTestData(Logger logger)
                 Number = o + 1,
                 Name = $"Event-{eventNumber}",
                 LeaderLink = $"https://leader-id.ru/events/{eventNumber}",
-                Reason = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
-                Documents = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
-                Remark = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
-                Comment = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray())
+                Reason = GenerateRandomString(random.Next(1, 100)),
+                Documents = GenerateRandomString(random.Next(1, 100)),
+                Remark = GenerateRandomString(random.Next(1, 100)),
+                Comment = GenerateRandomString(random.Next(1, 100))
             });
         }
         
@@ -171,10 +170,10 @@ static List<DataForWord> GenerateTestData(Logger logger)
                 Number = p + 1,
                 Name = $"Startup-{startupNumber}",
                 Link = $"https://pt.2035.university/project/{startupNumber}",
-                Reason = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
-                Documents = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
-                Remark = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray()),
-                Comment = new string(Enumerable.Repeat(chars, 100).Select(s => s[random.Next(s.Length)]).ToArray())
+                Reason = GenerateRandomString(random.Next(1, 100)),
+                Documents = GenerateRandomString(random.Next(1, 100)),
+                Remark = GenerateRandomString(random.Next(1, 100)),
+                Comment = GenerateRandomString(random.Next(1, 100))
             });
         }
         
@@ -199,7 +198,7 @@ static List<DataForWord> GetDataFromDatabase(string contractNumber, Logger logge
 
 
     logger.Information("Getting participants...");
-    trainedStudents = Connection.GetParticipantsForContract(contractNumber);
+    //trainedStudents = Connection.GetParticipantsForContract(contractNumber);
     logger.Information("Got data about [{count}] participants", trainedStudents.Count);
 
     logger.Information("Getting events...");
@@ -207,7 +206,7 @@ static List<DataForWord> GetDataFromDatabase(string contractNumber, Logger logge
     logger.Information("Got data about [{count}] events", events.Count);
 
     logger.Information("Getting startups...");
-    startups = Connection.GetStartupsForContract(contractNumber);
+    //startups = Connection.GetStartupsForContract(contractNumber);
     logger.Information("Got data about [{count}] startups", startups.Count);
 
     dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups, errors1, errors2, errors3));
@@ -226,4 +225,11 @@ static Logger ConfigureLogger()
         .MinimumLevel.Debug()
         .WriteTo.Console()
         .CreateLogger();
+}
+
+static string GenerateRandomString(int length)
+{
+    var random = new Random();
+    var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    return new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray());
 }
