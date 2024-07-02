@@ -162,4 +162,85 @@ public static class Connection
 
         return participants;
     }
+    
+    public static List<TrainedStudent> GetNewTable1ForContract(string contractID)
+    {
+        List<TrainedStudent> participants = new List<TrainedStudent>();
+
+        string cmdString = "GetNewTable1ForContract";
+
+        SqlConnection con = new SqlConnection(conString);
+
+        SqlCommand cmd = new SqlCommand(cmdString, con);
+
+        cmd.CommandType = CommandType.StoredProcedure;
+        
+        SqlParameter idParam = new SqlParameter
+        {
+            ParameterName = "@id",
+            Value = contractID
+        };
+        cmd.Parameters.Add(idParam);
+        
+        con.Open();
+
+        SqlDataReader reader = cmd.ExecuteReader();
+
+        var studentID = 1;
+        
+        while (reader.Read())
+        {
+            TrainedStudent p = new TrainedStudent();
+            p.Number = studentID;
+            p.LeaderId = Convert.ToInt64(reader[0]);
+            p.FIO = reader[1].ToString();
+            p.EventsId = reader[2].ToString();
+            p.Count = Convert.ToInt32(reader[3]);
+            p.StartUp = reader[4].ToString();
+            p.Link = reader[5].ToString();
+            studentID++;
+            participants.Add(p);
+        }
+
+        con.Close();
+
+        return participants;
+    }
+    
+    public static List<ErrorTable1> GetErrors1ForContract(string contractID)
+    {
+        List<ErrorTable1> participants = new List<ErrorTable1>();
+
+        string cmdString = "SELECT * FROM ErrorTable1 WHERE ContractID = '" + contractID + "'";
+
+        SqlConnection con = new SqlConnection(conString);
+
+        SqlCommand cmd = new SqlCommand(cmdString, con);
+
+        cmd.CommandType = CommandType.Text;
+        
+        con.Open();
+
+        SqlDataReader reader = cmd.ExecuteReader();
+
+        var studentID = 1;
+        
+        while (reader.Read())
+        {
+            ErrorTable1 p = new ErrorTable1();
+            p.Number = studentID;
+            p.Name = reader[0].ToString();
+            p.LeaderLink = reader[1].ToString();
+            p.Reason = "Участие обучившегося в мероприятиях АП не подтверждается в данных Leader-ID";
+            p.Documents = "Необходимо запросить документы, подтверждающие участие студента в акселерационной программе либо внести соответствующие корректировки в отчетные документы";
+            p.Remark = "";
+            p.Comment = "";
+            studentID++;
+            participants.Add(p);
+        }
+
+        con.Close();
+
+        return participants;
+    }
 }
