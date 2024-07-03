@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using Microsoft.Data.SqlClient;
+using Microsoft.IdentityModel.Tokens;
 using WordProcessor.Table1.Entities;
 
 namespace WordProcessor.Table1;
@@ -31,11 +32,11 @@ public static class Connection
             TrainedStudent p = new TrainedStudent();
             p.Number = studentID;
             p.LeaderId = Convert.ToInt64(reader[0]);
-            p.FIO = reader[1].ToString();
-            p.EventsId = reader[2].ToString();
+            p.FIO = string.IsNullOrEmpty(reader[1].ToString()) ? "-" : reader[1].ToString() ?? "-";
+            p.EventsId = string.IsNullOrEmpty(reader[2].ToString()) ? "-" : reader[2].ToString() ?? "-";
             p.Count = Convert.ToInt32(reader[3]);
-            p.StartUp = reader[4].ToString();
-            p.Link = reader[5].ToString();
+            p.StartUp = string.IsNullOrEmpty(reader[4].ToString()) ? "-" : reader[4].ToString() ?? "-";
+            p.Link = string.IsNullOrEmpty(reader[5].ToString()) ? "-" : reader[5].ToString() ?? "-";
             studentID++;
             participants.Add(p);
         }
@@ -66,13 +67,13 @@ public static class Connection
         {
             Event e = new Event();
             e.Number = eventID;
-            e.Name = reader[0].ToString();
-            e.LeaderId = reader[1].ToString();
-            e.Link = reader[2].ToString();
-            e.DateStart = Convert.ToDateTime(reader[3]).ToString("yyyy-MM-dd HH:mm");
-            e.Format = reader[4].ToString();
+            e.Name = string.IsNullOrEmpty(reader[0].ToString()) ? "-" : reader[0].ToString() ?? "-";
+            e.LeaderId = string.IsNullOrEmpty(reader[1].ToString()) ? "-" : reader[1].ToString() ?? "-";
+            e.Link = string.IsNullOrEmpty(reader[2].ToString()) ? "-" : reader[2].ToString() ?? "-";
+            e.DateStart = Convert.ToDateTime(reader[3]).ToString("dd.MM.yyyy HH:mm");
+            e.Format = string.IsNullOrEmpty(reader[4].ToString()) ? "-" : reader[4].ToString() ?? "-";
             e.CountOfParticipants = Convert.ToInt64(reader[5]);
-            e.LeaderIdNumber = reader[6].ToString();
+            e.LeaderIdNumber = string.IsNullOrEmpty(reader[6].ToString()) ? "-" : reader[6].ToString() ?? "-";
             eventID++;
             events.Add(e);
         }
@@ -112,8 +113,8 @@ public static class Connection
             Startup s = new Startup();
             s.Number = startupID;
             var startupIDForProcedure = Convert.ToInt32(reader[0]);
-            s.Name = reader[1].ToString();
-            s.Link = reader[2].ToString();
+            s.Name = string.IsNullOrEmpty(reader[1].ToString()) ? "-" : reader[1].ToString() ?? "-";
+            s.Link = string.IsNullOrEmpty(reader[2].ToString()) ? "-" : reader[2].ToString() ?? "-";
             s.HasSign = "";
             s.Category = "";
             s.Participants = GetParticipantsForStartup(startupIDForProcedure);
@@ -152,9 +153,9 @@ public static class Connection
         while (reader.Read())
         {
             Participant p = new Participant();
-            p.Name = reader[1].ToString();
-            p.LeaderID = reader[2].ToString();
-            p.EventIDs = reader[3].ToString();
+            p.Name = string.IsNullOrEmpty(reader[1].ToString()) ? "-" : reader[1].ToString() ?? "-";
+            p.LeaderID = string.IsNullOrEmpty(reader[2].ToString()) ? "-" : reader[2].ToString() ?? "-";
+            p.EventIDs = string.IsNullOrEmpty(reader[3].ToString()) ? "-" : reader[3].ToString() ?? "-";
             participants.Add(p);
         }
 
@@ -193,11 +194,11 @@ public static class Connection
             TrainedStudent p = new TrainedStudent();
             p.Number = studentID;
             p.LeaderId = Convert.ToInt64(reader[0]);
-            p.FIO = reader[1].ToString();
-            p.EventsId = reader[2].ToString();
+            p.FIO = string.IsNullOrEmpty(reader[1].ToString()) ? "-" : reader[1].ToString() ?? "-";
+            p.EventsId = string.IsNullOrEmpty(reader[2].ToString()) ? "-" : reader[2].ToString() ?? "-";
             p.Count = Convert.ToInt32(reader[3]);
-            p.StartUp = reader[4].ToString();
-            p.Link = reader[5].ToString();
+            p.StartUp = string.IsNullOrEmpty(reader[4].ToString()) ? "-" : reader[4].ToString() ?? "-";
+            p.Link = string.IsNullOrEmpty(reader[5].ToString()) ? "-" : reader[5].ToString() ?? "-";
             studentID++;
             participants.Add(p);
         }

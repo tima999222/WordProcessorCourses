@@ -46,7 +46,6 @@ namespace WordProcessor.Table1
                         
                         //Error Tables
                         docProcessor.MapItems(d.First().Error1, 3);
-                        docProcessor.MapItems(d.First().Error2, 3);
                         docProcessor.MapItems(d.First().Error3, 3);
                         
                         docProcessor.MapItemsOther(d.First().Startups, 3);

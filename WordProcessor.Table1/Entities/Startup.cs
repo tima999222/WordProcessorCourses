@@ -7,6 +7,5 @@ public class Startup
     public string Link { get; set; }
     public string? HasSign { get; set; }
     public string? Category { get; set; }
-
     public List<Participant> Participants { get; set; }
 }
