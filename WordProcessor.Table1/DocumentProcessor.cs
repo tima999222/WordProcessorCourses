@@ -207,6 +207,7 @@ namespace ASTepanov.Docx
             });
         }
 
+        //старый вариант
         public void MapItemsOther<T>(IEnumerable<T> items, int rowSkips)
         {
             if (!items.Any()) return;
@@ -242,11 +243,11 @@ namespace ASTepanov.Docx
                         if (propertyValues.TryGetValue(cellText, out var value))
                         {
                             Paragraph para = cell.Elements<Paragraph>().First();
-                            
+
                             ParagraphProperties paraProperties = new ParagraphProperties();
                             paraProperties.Justification = new Justification() { Val = JustificationValues.Center };
                             para.PrependChild(paraProperties);
-                            
+
                             RunProperties runProperties = new RunProperties();
                             runProperties.FontSize = new FontSize() { Val = "16" }; // Размер шрифта 12pt
                             Run run = new Run();
@@ -280,15 +281,15 @@ namespace ASTepanov.Docx
                                 foreach (var participant in startup.Participants)
                                 {
                                     var newParagraph = new Paragraph();
-                                    
+
                                     ParagraphProperties paraProperties = new ParagraphProperties();
                                     paraProperties.Justification = new Justification() { Val = JustificationValues.Center };
                                     newParagraph.PrependChild(paraProperties);
-                                    
+
                                     var newRun = new Run();
-                                    
+
                                     RunProperties runProperties = new RunProperties();
-                                    runProperties.Append(new FontSize(){ Val = "16" });
+                                    runProperties.Append(new FontSize() { Val = "16" });
                                     newRun.Append(runProperties);
 
                                     var cleanCellText = cellText.Replace(itemTypeBeginMappingKey, "").Replace("Participants.", "").Replace("{", "").Replace("}", "");
@@ -299,7 +300,7 @@ namespace ASTepanov.Docx
                                                                string.Empty;
                                         newRun.Append(new Text(participantValue));
                                     }
-                                    
+
                                     //TODO: ДОБАВЛЯТЬ НОВУЮ ЯЧЕЙКУ В ЯЧЕЙКУ (по умолчанию так нельзя)
                                     newParagraph.Append(newRun);
                                     cell.Append(newParagraph);
@@ -312,6 +313,258 @@ namespace ASTepanov.Docx
             });
         }
 
+        #region Вариант где создается куча строк, остается придумать как мёрджить 1-5 столбцы
+
+        /*public void MapItemsOther<T>(IEnumerable<T> items, int rowSkips)
+        {
+            if (!items.Any()) return;
+
+            var itemType = items.First().GetType();
+            var itemTypeBeginMappingKey = "{" + itemType.Name + ".";
+
+            ProcessEach(e =>
+            {
+                if (!(e is Table table)) return;
+
+                var secondRow = table.Elements<TableRow>().Skip(rowSkips).FirstOrDefault();
+                if (secondRow == null || !secondRow.InnerText.Contains(itemTypeBeginMappingKey)) return;
+
+                var templateRow = secondRow.CloneNode(true) as TableRow;
+                secondRow.Remove();
+
+                foreach (var item in items)
+                {
+                    var propertyValues = itemType.GetProperties()
+                        .Where(prop => prop.Name != "Participants")
+                        .ToDictionary(
+                            prop => itemTypeBeginMappingKey + prop.Name + "}",
+                            prop => prop.GetValue(item)?.ToString() ?? string.Empty
+                        );
+
+                    // Создание строки для каждого участника
+                    if (item is Startup startup && startup.Participants != null)
+                    {
+                        foreach (var participant in startup.Participants)
+                        {
+                            var newRow = (TableRow)templateRow.CloneNode(true);
+
+                            // Обработка обычных столбцов
+                            for (int i = 0; i < 5; i++)
+                            {
+                                var cell = newRow.Elements<TableCell>().ElementAt(i);
+                                var cellText = cell.InnerText.Trim();
+                                if (propertyValues.TryGetValue(cellText, out var value))
+                                {
+                                    Paragraph para = cell.Elements<Paragraph>().First();
+
+                                    ParagraphProperties paraProperties = new ParagraphProperties();
+                                    paraProperties.Justification = new Justification() { Val = JustificationValues.Center };
+                                    para.PrependChild(paraProperties);
+
+                                    RunProperties runProperties = new RunProperties();
+                                    runProperties.FontSize = new FontSize() { Val = "16" }; // Размер шрифта 12pt
+                                    Run run = new Run();
+                                    run.Append(runProperties);
+                                    Text text = new Text(value);
+                                    run.Append(text);
+                                    para.RemoveAllChildren<Run>();
+                                    para.Append(run);
+                                }
+                            }
+
+                            // Обработка столбцов с участниками
+                            for (int i = 5; i < 8; i++)
+                            {
+                                var cell = newRow.Elements<TableCell>().ElementAt(i);
+                                var cellText = cell.InnerText.Trim();
+
+                                var cleanCellText = cellText.Replace(itemTypeBeginMappingKey, "").Replace("Participants.", "").Replace("{", "").Replace("}", "");
+                                var participantProperty = typeof(Participant).GetProperty(cleanCellText);
+                                if (participantProperty != null)
+                                {
+                                    var participantValue = participantProperty.GetValue(participant)?.ToString() ?? string.Empty;
+
+                                    Paragraph para = cell.Elements<Paragraph>().First();
+                                    ParagraphProperties paraProperties = new ParagraphProperties();
+                                    paraProperties.Justification = new Justification() { Val = JustificationValues.Center };
+                                    para.PrependChild(paraProperties);
+
+                                    RunProperties runProperties = new RunProperties();
+                                    runProperties.FontSize = new FontSize() { Val = "16" }; // Размер шрифта 12pt
+                                    Run run = new Run();
+                                    run.Append(runProperties);
+                                    Text text = new Text(participantValue);
+                                    run.Append(text);
+                                    para.RemoveAllChildren<Run>();
+                                    para.Append(run);
+                                }
+                            }
+
+                            table.Append(newRow);
+                        }
+                    }
+                    else
+                    {
+                        var newRow = (TableRow)templateRow.CloneNode(true);
+
+                        // Обработка обычных столбцов
+                        for (int i = 0; i < 5; i++)
+                        {
+                            var cell = newRow.Elements<TableCell>().ElementAt(i);
+                            var cellText = cell.InnerText.Trim();
+                            if (propertyValues.TryGetValue(cellText, out var value))
+                            {
+                                Paragraph para = cell.Elements<Paragraph>().First();
+
+                                ParagraphProperties paraProperties = new ParagraphProperties();
+                                paraProperties.Justification = new Justification() { Val = JustificationValues.Center };
+                                para.PrependChild(paraProperties);
+
+                                RunProperties runProperties = new RunProperties();
+                                runProperties.FontSize = new FontSize() { Val = "16" }; // Размер шрифта 12pt
+                                Run run = new Run();
+                                run.Append(runProperties);
+                                Text text = new Text(value);
+                                run.Append(text);
+                                para.RemoveAllChildren<Run>();
+                                para.Append(run);
+                            }
+                        }
+
+                        table.Append(newRow);
+                    }
+                }
+            });
+        }*/
+
+        #endregion
+
+        #region Кривой вариант из скрина который я кидал в ЛС Ане
+        /*        public void MapItemsOther<T>(IEnumerable<T> items, int rowSkips)
+                {
+                    if (!items.Any()) return;
+
+                    var itemType = items.First().GetType();
+                    var itemTypeBeginMappingKey = "{" + itemType.Name + ".";
+
+                    ProcessEach(e =>
+                    {
+                        if (!(e is Table table)) return;
+
+                        var secondRow = table.Elements<TableRow>().Skip(rowSkips).FirstOrDefault();
+                        if (secondRow == null || !secondRow.InnerText.Contains(itemTypeBeginMappingKey)) return;
+
+                        var templateRow = secondRow.CloneNode(true) as TableRow;
+                        secondRow.Remove();
+
+                        foreach (var item in items)
+                        {
+                            var propertyValues = itemType.GetProperties()
+                                .Where(prop => prop.Name != "Participants")
+                                .ToDictionary(
+                                    prop => itemTypeBeginMappingKey + prop.Name + "}",
+                                    prop => prop.GetValue(item)?.ToString() ?? string.Empty
+                                );
+
+                            TableRow headerRow = (TableRow)templateRow.CloneNode(true);
+
+                            // Обработка обычных столбцов (1-5)
+                            for (int i = 0; i < 5; i++)
+                            {
+                                var cell = headerRow.Elements<TableCell>().ElementAt(i);
+                                var cellText = cell.InnerText.Trim();
+                                if (propertyValues.TryGetValue(cellText, out var value))
+                                {
+                                    Paragraph para = cell.Elements<Paragraph>().First();
+
+                                    ParagraphProperties paraProperties = new ParagraphProperties();
+                                    paraProperties.Justification = new Justification() { Val = JustificationValues.Center };
+                                    para.PrependChild(paraProperties);
+
+                                    RunProperties runProperties = new RunProperties();
+                                    runProperties.FontSize = new FontSize() { Val = "16" }; // Размер шрифта 12pt
+                                    Run run = new Run();
+                                    run.Append(runProperties);
+                                    Text text = new Text(value);
+                                    run.Append(text);
+                                    para.RemoveAllChildren<Run>();
+                                    para.Append(run);
+                                }
+                            }
+                            table.Append(headerRow);
+
+                            // Обработка столбцов с участниками (6-8)
+                            if (item is Startup startup && startup.Participants != null)
+                            {
+                                foreach (var participant in startup.Participants)
+                                {
+                                    var participantRow = (TableRow)templateRow.CloneNode(true);
+
+                                    for (int i = 5; i < 8; i++)
+                                    {
+                                        var cell = participantRow.Elements<TableCell>().ElementAt(i);
+                                        var cellText = cell.InnerText.Trim();
+
+                                        var cleanCellText = cellText.Replace(itemTypeBeginMappingKey, "").Replace("Participants.", "").Replace("{", "").Replace("}", "");
+                                        var participantProperty = typeof(Participant).GetProperty(cleanCellText);
+                                        if (participantProperty != null)
+                                        {
+                                            var participantValue = participantProperty.GetValue(participant)?.ToString() ?? string.Empty;
+
+                                            Paragraph para = cell.Elements<Paragraph>().First();
+                                            ParagraphProperties paraProperties = new ParagraphProperties();
+                                            paraProperties.Justification = new Justification() { Val = JustificationValues.Center };
+                                            para.PrependChild(paraProperties);
+
+                                            RunProperties runProperties = new RunProperties();
+                                            runProperties.FontSize = new FontSize() { Val = "16" }; // Размер шрифта 12pt
+                                            Run run = new Run();
+                                            run.Append(runProperties);
+                                            Text text = new Text(participantValue);
+                                            run.Append(text);
+                                            para.RemoveAllChildren<Run>();
+                                            para.Append(run);
+                                        }
+                                    }
+                                    table.Append(participantRow);
+                                }
+
+                                // Объединение ячеек с 1 по 5 столбцы для всех строк стартапа
+                                int rowsCount = startup.Participants.Count();
+                                MergeHeaderCells(table, rowsCount);
+                            }
+                            else
+                            {
+                                table.Append(headerRow);
+                            }
+                        }
+                    });
+                }
+
+                private void MergeHeaderCells(Table table, int rowsCount)
+                {
+                    var rows = table.Elements<TableRow>().ToList();
+                    var startIndex = rows.Count - rowsCount - 1; // -1 для headerRow
+
+                    for (int i = startIndex; i <= startIndex + rowsCount; i++)
+                    {
+                        var row = rows[i];
+                        for (int j = 0; j < 5; j++)
+                        {
+                            var cell = row.Elements<TableCell>().ElementAt(j);
+                            if (i == startIndex)
+                            {
+                                cell.GetFirstChild<TableCellProperties>().Append(new HorizontalMerge { Val = MergedCellValues.Restart });
+                            }
+                            else
+                            {
+                                cell.RemoveAllChildren<Paragraph>();
+                                cell.GetFirstChild<TableCellProperties>().Append(new HorizontalMerge { Val = MergedCellValues.Continue });
+                            }
+                        }
+                    }
+                }*/
+        #endregion
 
         private void ReplaceCellText(TableCell cell, string value)
         {
