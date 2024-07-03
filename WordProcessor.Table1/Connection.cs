@@ -70,9 +70,9 @@ public static class Connection
             e.Name = string.IsNullOrEmpty(reader[0].ToString()) ? "-" : reader[0].ToString() ?? "-";
             e.LeaderId = string.IsNullOrEmpty(reader[1].ToString()) ? "-" : reader[1].ToString() ?? "-";
             e.Link = string.IsNullOrEmpty(reader[2].ToString()) ? "-" : reader[2].ToString() ?? "-";
-            e.DateStart = Convert.ToDateTime(reader[3]).ToString("dd.MM.yyyy HH:mm");
+            e.DateStart = string.IsNullOrEmpty(reader[3].ToString()) ? "-" : Convert.ToDateTime(reader[3]).ToString("dd.MM.yyyy HH:mm");
             e.Format = string.IsNullOrEmpty(reader[4].ToString()) ? "-" : reader[4].ToString() ?? "-";
-            e.CountOfParticipants = Convert.ToInt64(reader[5]);
+            e.CountOfParticipants = string.IsNullOrEmpty(reader[5].ToString()) ? 0 : Convert.ToInt64(reader[5]);
             e.LeaderIdNumber = string.IsNullOrEmpty(reader[6].ToString()) ? "-" : reader[6].ToString() ?? "-";
             eventID++;
             events.Add(e);
