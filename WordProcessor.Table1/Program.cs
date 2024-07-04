@@ -9,10 +9,10 @@ var logger = ConfigureLogger();
 
 logger.Information("Starting Up");
 
-var contractNumber = "70-2023-000622";
+var contractNumber = "70-2023-000618";
 
 logger.Information("Trying to get data from database for contract with number [{contractNumber}]", contractNumber);
-List<DataForWord> dataFromDB = null;//GetDataFromDatabase(contractNumber, logger);
+List<DataForWord> dataFromDB = GetDataFromDatabase(contractNumber, logger);
 
 
 List<DataForWord> testData = null;
@@ -130,7 +130,7 @@ static List<DataForWord> GenerateTestData(Logger logger)
             var leaderIDNumber = random.Next(1000, 9999);
             errors1.Add(new ErrorTable1()
             {
-                Number = n + 1,
+                Number = (n + 1).ToString(),
                 Name = $"Student-{leaderIDNumber}",
                 LeaderLink = $"https://leader-id.ru/users/{leaderIDNumber}",
                 Reason = GenerateRandomString(random.Next(1, 100)),
@@ -141,26 +141,8 @@ static List<DataForWord> GenerateTestData(Logger logger)
         }
         
         logger.Information("Generated [{count}] errors for table 1", errors1.Count);
-        
-        var errors3 = new List<ErrorTable3>();
-        for (int p = 0; p < random.Next(1, 10); p++)
-        {
-            var startupNumber = random.Next(1000, 9999);
-            errors3.Add(new ErrorTable3()
-            {
-                Number = p + 1,
-                Name = $"Startup-{startupNumber}",
-                Link = $"https://pt.2035.university/project/{startupNumber}",
-                Reason = GenerateRandomString(random.Next(1, 100)),
-                Documents = GenerateRandomString(random.Next(1, 100)),
-                Remark = GenerateRandomString(random.Next(1, 100)),
-                Comment = GenerateRandomString(random.Next(1, 100))
-            });
-        }
-        
-        logger.Information("Generated [{count}] errors for table 3", errors3.Count);
 
-        dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups, errors1, errors3));
+        dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups, errors1));
     }
 
     return dataList;
@@ -174,7 +156,6 @@ static List<DataForWord> GetDataFromDatabase(string contractNumber, Logger logge
     var startups = new List<Startup>();
 
     var errors1 = new List<ErrorTable1>();
-    var errors3 = new List<ErrorTable3>();
 
 
     logger.Information("Getting participants...");
@@ -187,14 +168,20 @@ static List<DataForWord> GetDataFromDatabase(string contractNumber, Logger logge
     logger.Information("Got [{count}] errors", errors1.Count);
 
     logger.Information("Getting events...");
-    events = Connection.GetEventsForContract(contractNumber);
+    //events = Connection.GetEventsForContract(contractNumber);
+    events = Connection.GetNewTable2ForContract(contractNumber);
     logger.Information("Got data about [{count}] events", events.Count);
 
     logger.Information("Getting startups...");
     startups = Connection.GetStartupsForContract(contractNumber);
     logger.Information("Got data about [{count}] startups", startups.Count);
+    
+    if (!errors1.Any() && errors1.Count() == 0)
+    {
+        errors1.Add(new ErrorTable1());
+    }
 
-    dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups, errors1, errors3));
+    dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups, errors1));
 
     return dataList;
 }

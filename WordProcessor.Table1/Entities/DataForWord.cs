@@ -14,14 +14,13 @@ namespace WordProcessor.Table1.Entities
             
         }
 
-        public DataForWord(string contractNumber, List<TrainedStudent> trainedStudents, List<Event> events, List<Startup> startups, List<ErrorTable1> error1, List<ErrorTable3> error3)
+        public DataForWord(string contractNumber, List<TrainedStudent> trainedStudents, List<Event> events, List<Startup> startups, List<ErrorTable1> error1)
         {
             ContractNumber = contractNumber;
             TrainedStudents = trainedStudents;
             Events = events;
             Startups = startups;
             Error1 = error1;
-            Error3 = error3;
         }
 
         public string ContractNumber { get; set; }
@@ -30,6 +29,5 @@ namespace WordProcessor.Table1.Entities
         public List<Startup> Startups { get; set; }
         
         public List<ErrorTable1> Error1 { get; set; }
-        public List<ErrorTable3> Error3 { get; set; }
     }
 }

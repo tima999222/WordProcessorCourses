@@ -2,7 +2,7 @@
 
 public class ErrorTable3
 {
-    public long Number { get; set; }   
+    public string Number { get; set; }   
     public string Name { get; set; }
     public string Link { get; set; }
     public string Reason { get; set; }

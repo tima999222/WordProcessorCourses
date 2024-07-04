@@ -153,7 +153,7 @@ public static class Connection
         while (reader.Read())
         {
             Participant p = new Participant();
-            p.Name = string.IsNullOrEmpty(reader[1].ToString()) ? "-" : reader[1].ToString() ?? "-";
+            p.Name = string.IsNullOrEmpty(reader[1].ToString()) ? "" : reader[1].ToString() ?? "";
             p.LeaderID = string.IsNullOrEmpty(reader[2].ToString()) ? "-" : reader[2].ToString() ?? "-";
             p.EventIDs = string.IsNullOrEmpty(reader[3].ToString()) ? "-" : reader[3].ToString() ?? "-";
             participants.Add(p);
@@ -229,7 +229,7 @@ public static class Connection
         while (reader.Read())
         {
             ErrorTable1 p = new ErrorTable1();
-            p.Number = studentID;
+            p.Number = studentID.ToString();
             p.Name = reader[0].ToString();
             p.LeaderLink = reader[1].ToString();
             p.Reason = "Участие обучившегося в мероприятиях АП не подтверждается в данных Leader-ID";
@@ -241,7 +241,50 @@ public static class Connection
         }
 
         con.Close();
-
+        
         return participants;
+    }
+    
+    public static List<Event> GetNewTable2ForContract(string contractID)
+    {
+        List<Event> events = new List<Event>();
+
+        string cmdString = "GetNewTable2ForContract";
+
+        SqlConnection con = new SqlConnection(conString);
+
+        SqlCommand cmd = new SqlCommand(cmdString, con);
+
+        cmd.CommandType = CommandType.StoredProcedure;
+        
+        SqlParameter idParam = new SqlParameter
+        {
+            ParameterName = "@id",
+            Value = contractID
+        };
+        cmd.Parameters.Add(idParam);
+        
+        con.Open();
+
+        SqlDataReader reader = cmd.ExecuteReader();
+        
+        while (reader.Read())
+        {
+            Event e = new Event();
+            e.Name = string.IsNullOrEmpty(reader[0].ToString()) ? "-" : reader[0].ToString() ?? "-";
+            e.LeaderId = string.IsNullOrEmpty(reader[1].ToString()) ? "-" : reader[1].ToString() ?? "-";
+            e.Link = string.IsNullOrEmpty(reader[2].ToString()) ? "-" : reader[2].ToString() ?? "-";
+            e.DateStart = string.IsNullOrEmpty(reader[3].ToString()) ? "-" : Convert.ToDateTime(reader[3]).ToString("dd.MM.yyyy HH:mm");
+            e.Format = string.IsNullOrEmpty(reader[4].ToString()) ? "-" : reader[4].ToString() ?? "-";
+            e.CountOfParticipants = string.IsNullOrEmpty(reader[5].ToString()) ? 0 : Convert.ToInt64(reader[5]);
+            e.LeaderIdNumber = string.IsNullOrEmpty(reader[6].ToString()) ? "-" : reader[6].ToString() ?? "-";
+            events.Add(e);
+        }
+
+        con.Close();
+
+        return events.OrderBy(e => DateTime.Parse(e.DateStart))
+            .Select((e, index) => { e.Number = index + 1; return e; })
+            .ToList();
     }
 }
