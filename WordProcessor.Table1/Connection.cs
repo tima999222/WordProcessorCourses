@@ -232,7 +232,7 @@ public static class Connection
             p.Number = studentID.ToString();
             p.Name = reader[0].ToString();
             p.LeaderLink = reader[1].ToString();
-            p.Reason = "Участие обучившегося в мероприятиях АП не подтверждается в данных Leader-ID";
+            p.Reason = reader[2].ToString();
             p.Documents = "Необходимо запросить документы, подтверждающие участие студента в акселерационной программе либо внести соответствующие корректировки в отчетные документы";
             p.Remark = "";
             p.Comment = "";
@@ -283,7 +283,11 @@ public static class Connection
 
         con.Close();
 
-        return events.OrderBy(e => DateTime.Parse(e.DateStart))
+        return events.OrderBy(e =>
+            {
+                DateTime parsedDate;
+                return DateTime.TryParse(e.DateStart, out parsedDate) ? parsedDate : DateTime.MinValue;
+            })
             .Select((e, index) => { e.Number = index + 1; return e; })
             .ToList();
     }
