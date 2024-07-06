@@ -245,6 +245,50 @@ public static class Connection
         return participants;
     }
     
+    public static List<ErrorTable1> GetErrorsForContract(string contractID)
+    {
+        List<ErrorTable1> participants = new List<ErrorTable1>();
+
+        string cmdString = "GetErrorsForContract";
+
+        SqlConnection con = new SqlConnection(conString);
+
+        SqlCommand cmd = new SqlCommand(cmdString, con);
+
+        cmd.CommandType = CommandType.StoredProcedure;
+        
+        SqlParameter idParam = new SqlParameter
+        {
+            ParameterName = "@id",
+            Value = contractID
+        };
+        cmd.Parameters.Add(idParam);
+        
+        con.Open();
+
+        SqlDataReader reader = cmd.ExecuteReader();
+
+        var studentID = 1;
+        
+        while (reader.Read())
+        {
+            ErrorTable1 p = new ErrorTable1();
+            p.Number = studentID.ToString();
+            p.Name = reader[0].ToString();
+            p.LeaderLink = reader[1].ToString();
+            p.Reason = reader[2].ToString();
+            p.Documents = "Необходимо запросить документы, подтверждающие участие студента в акселерационной программе либо внести соответствующие корректировки в отчетные документы";
+            p.Remark = "";
+            p.Comment = "";
+            studentID++;
+            participants.Add(p);
+        }
+
+        con.Close();
+        
+        return participants;
+    }
+    
     public static List<Event> GetNewTable2ForContract(string contractID)
     {
         List<Event> events = new List<Event>();

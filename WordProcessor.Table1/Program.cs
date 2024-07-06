@@ -9,38 +9,84 @@ var logger = ConfigureLogger();
 
 logger.Information("Starting Up");
 
-var contractNumber = "70-2023-000618";
+IEnumerable<string> contracts =
+[
+    /*"70-2023-000670",
+    "70-2023-000622",
+    "70-2023-000669",
+    //"70-2023-000620",
+    "70-2023-000672",
+    "70-2023-000677",
+    //"70-2023-000678",
+    "70-2023-000671",
+    "70-2023-000621",
+    "70-2023-000673",*/
+    
+    "70-2023-000626",
+    "70-2023-000644",
+    "70-2023-000645",
+    "70-2023-000650",
+    "70-2023-000651",
+    "70-2023-000655",
+    "70-2023-000662",
+    "70-2023-000663",
+    "70-2023-000664",
+    "70-2023-000667"
+];
 
-logger.Information("Trying to get data from database for contract with number [{contractNumber}]", contractNumber);
-List<DataForWord> dataFromDB = GetDataFromDatabase(contractNumber, logger);
-
-
-List<DataForWord> testData = null;
-
-var groupedData = new List<IGrouping<string, DataForWord>>();
-
-
-if (dataFromDB == null || !dataFromDB.Any())
+static IEnumerable<IEnumerable<T>> SplitIntoChunks<T>(IEnumerable<T> source, int chunkSize)
 {
-    logger.Information("Could not get data for contract with number [{contractNumber}]", contractNumber);
-    testData = GenerateTestData(logger);
-    groupedData = GroupData(testData);
-}
-else
-{
-    logger.Information("Got data for contract with number [{contractNumber}]", contractNumber);
-    groupedData = GroupData(dataFromDB);
-}
-
-if (groupedData != null && groupedData.Any())
-{
-    logger.Information("Creating file(s)...");
-    var zipPath = Assembly.GetExecutingAssembly().Directory() + "/documents.zip";
-    var result = ApplicantForGrant.CreateApplicationsForOrder(groupedData, zipPath);
-    if (result != null)
+    var list = new List<T>(source);
+    for (int i = 0; i < list.Count; i += chunkSize)
     {
-        foreach (var data in groupedData)
-            logger.Information("File [{contractNumber}] added to archive", data.Key + ".docx");
+        yield return list.GetRange(i, Math.Min(chunkSize, list.Count - i));
+    }
+}
+
+
+foreach (var contractsChunk in SplitIntoChunks(contracts, 3))
+{
+    Parallel.ForEach(contractsChunk, contract =>
+    {
+        fillContract(contract, logger);
+    });
+}
+
+//fillContract("70-2023-000620", logger);
+
+static void fillContract(string contractNumber, Logger logger)
+{
+    logger.Information("Trying to get data from database for contract with number [{contractNumber}]", contractNumber);
+    List<DataForWord> dataFromDB = null;//GetDataFromDatabase(contractNumber, logger);
+
+
+    List<DataForWord> testData = null;
+
+    var groupedData = new List<IGrouping<string, DataForWord>>();
+
+
+    if (dataFromDB == null || !dataFromDB.Any())
+    {
+        logger.Information("Could not get data for contract with number [{contractNumber}]", contractNumber);
+        testData = GenerateTestData(logger);
+        groupedData = GroupData(testData);
+    }
+    else
+    {
+        logger.Information("Got data for contract with number [{contractNumber}]", contractNumber);
+        groupedData = GroupData(dataFromDB);
+    }
+
+    if (groupedData != null && groupedData.Any())
+    {
+        logger.Information("Creating file(s)...");
+        var zipPath = Assembly.GetExecutingAssembly().Directory() + "/documents.zip";
+        var result = ApplicantForGrant.CreateApplicationsForOrder(groupedData, zipPath);
+        if (result != null)
+        {
+            foreach (var data in groupedData)
+                logger.Information("File [{contractNumber}] added to archive", data.Key + ".docx");
+        }
     }
 }
 
@@ -123,7 +169,7 @@ static List<DataForWord> GenerateTestData(Logger logger)
         }
 
         logger.Information("Generated [{count}] startups", startups.Count);
-        
+
         var errors1 = new List<ErrorTable1>();
         for (int n = 0; n < random.Next(1, 10); n++)
         {
@@ -139,7 +185,7 @@ static List<DataForWord> GenerateTestData(Logger logger)
                 Comment = GenerateRandomString(random.Next(1, 100))
             });
         }
-        
+
         logger.Information("Generated [{count}] errors for table 1", errors1.Count);
 
         dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups, errors1));
@@ -161,24 +207,40 @@ static List<DataForWord> GetDataFromDatabase(string contractNumber, Logger logge
     logger.Information("Getting participants...");
     //trainedStudents = Connection.GetParticipantsForContract(contractNumber);
     trainedStudents = Connection.GetNewTable1ForContract(contractNumber);
-    logger.Information("Got data about [{count}] participants", trainedStudents.Count);
-    
+    logger.Information("Got data about [{count}] participants for contract [{c}]", trainedStudents.Count, contractNumber);
+
     logger.Information("Getting errors in Table 1...");
-    errors1 = Connection.GetErrors1ForContract(contractNumber);
-    logger.Information("Got [{count}] errors", errors1.Count);
+    //errors1 = Connection.GetErrors1ForContract(contractNumber);
+    errors1 = Connection.GetErrorsForContract(contractNumber);
+    logger.Information("Got [{count}] errors for contract [{c}]", errors1.Count, contractNumber);
 
     logger.Information("Getting events...");
     //events = Connection.GetEventsForContract(contractNumber);
     events = Connection.GetNewTable2ForContract(contractNumber);
-    logger.Information("Got data about [{count}] events", events.Count);
+    logger.Information("Got data about [{count}] events for contract [{c}]", events.Count, contractNumber);
 
     logger.Information("Getting startups...");
     startups = Connection.GetStartupsForContract(contractNumber);
-    logger.Information("Got data about [{count}] startups", startups.Count);
-    
+    logger.Information("Got data about [{count}] startups for contract [{c}]", startups.Count, contractNumber);
+
     if (!errors1.Any() && errors1.Count() == 0)
     {
         errors1.Add(new ErrorTable1());
+    }
+
+    if (!trainedStudents.Any() && trainedStudents.Count() == 0)
+    {
+        trainedStudents.Add(new TrainedStudent());
+    }
+    
+    if (!events.Any() && events.Count() == 0)
+    {
+        events.Add(new Event());
+    }
+    
+    if (!startups.Any() && startups.Count() == 0)
+    {
+        startups.Add(new Startup());
     }
 
     dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups, errors1));
