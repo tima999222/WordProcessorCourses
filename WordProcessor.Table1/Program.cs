@@ -19,16 +19,16 @@ namespace WordProcessor.Table1
 
             IEnumerable<string> contracts =
             [
-                /*"70-2023-000670",
+                "70-2023-000670",
                 "70-2023-000622",
                 "70-2023-000669",
-                //"70-2023-000620",
+                "70-2023-000620",
                 "70-2023-000672",
                 "70-2023-000677",
-                //"70-2023-000678",
+                "70-2023-000678",
                 "70-2023-000671",
                 "70-2023-000621",
-                "70-2023-000673",*/
+                "70-2023-000673",
 
                 "70-2023-000626",
                 "70-2023-000644",
@@ -39,7 +39,26 @@ namespace WordProcessor.Table1
                 "70-2023-000662",
                 "70-2023-000663",
                 "70-2023-000664",
-                "70-2023-000667"
+                "70-2023-000667",
+
+                "70-2023-000665",
+                "70-2023-000680",
+                "70-2023-000681",
+                "70-2023-000682",
+                "70-2023-000683",
+                "70-2023-000684",
+                "70-2023-000685",
+                "70-2023-000691",
+                "70-2023-000692",
+                "70-2023-000693",
+
+                "70-2023-000668",
+                "70-2023-000679",
+                "70-2023-000694",
+                "70-2023-000696",
+                "70-2023-000697",
+                "70-2023-000719",
+                "70-2023-000768"
             ];
 
             foreach (var contractsChunk in SplitIntoChunks(contracts, 3))
@@ -47,8 +66,10 @@ namespace WordProcessor.Table1
                 Parallel.ForEach(contractsChunk, contract =>
                 {
                     fillContract(contract, logger);
+                    Thread.Sleep(5000);
                 });
             }
+            //fillContract("70-2023-000678", logger);
         }
 
         static Logger ConfigureLogger()
@@ -70,7 +91,8 @@ namespace WordProcessor.Table1
 
         static void fillContract(string contractNumber, Logger logger)
         {
-            logger.Information("Trying to get data from database for contract with number [{contractNumber}]", contractNumber);
+            logger.Information("Trying to get data from database for contract with number [{contractNumber}]",
+                contractNumber);
             List<DataForWord> dataFromDB = null;//GetDataFromDatabase(contractNumber, logger);
 
 
@@ -101,7 +123,7 @@ namespace WordProcessor.Table1
                     if (result != null)
                     {
                         foreach (var data in groupedData)
-                            logger.Information("File [{contractNumber}] added to archive", data.Key + ".docx");
+                            logger.Information("File [Таблицы-{contractNumber}] added to archive", data.Key + ".docx");
                     }
                 }
             }
@@ -224,7 +246,8 @@ namespace WordProcessor.Table1
             logger.Information("Getting participants...");
             //trainedStudents = Connection.GetParticipantsForContract(contractNumber);
             trainedStudents = Connection.GetNewTable1ForContract(contractNumber);
-            logger.Information("Got data about [{count}] participants for contract [{c}]", trainedStudents.Count, contractNumber);
+            logger.Information("Got data about [{count}] participants for contract [{c}]", trainedStudents.Count,
+                contractNumber);
 
             logger.Information("Getting errors in Table 1...");
             //errors1 = Connection.GetErrors1ForContract(contractNumber);
@@ -278,18 +301,3 @@ namespace WordProcessor.Table1
         }
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-//fillContract("70-2023-000620", logger);
-

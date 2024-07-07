@@ -237,8 +237,13 @@ namespace ASTepanov.Docx
                     // Создание строки для каждого участника
                     if (item is Startup startup)
                     {
-                        partCount = startup.Participants.Count();
-
+                        if (startup.Participants != null)
+                            partCount = startup.Participants.Count();
+                        else
+                        {
+                            partCount = 0;
+                        }
+                        
                         if (partCount != 0)
                         {
                             foreach (var participant in startup.Participants)
