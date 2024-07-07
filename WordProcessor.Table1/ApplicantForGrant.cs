@@ -39,7 +39,7 @@ namespace WordProcessor.Table1
                     foreach (var d in list.AsParallel().WithDegreeOfParallelism(8))
                     {
                         var docProcessor = new DocumentProcessor(docTemplate);
-                        var fileName = $"{d.Key}".Replace("/", "_");
+                        var fileName = $"Таблицы-{d.Key}".Replace("/", "_");
                         docProcessor.Map(d.First());
                         docProcessor.MapItems(d.First().TrainedStudents, 2);
                         docProcessor.MapItems(d.First().Events, 2);

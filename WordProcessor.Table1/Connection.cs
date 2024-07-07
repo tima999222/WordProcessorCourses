@@ -116,9 +116,9 @@ public static class Connection
             s.Name = string.IsNullOrEmpty(reader[1].ToString()) ? "-" : reader[1].ToString() ?? "-";
             s.Link = string.IsNullOrEmpty(reader[2].ToString()) ? "-" : reader[2].ToString() ?? "-";
             s.HasSign = "";
-            s.Category = "";
-            s.Participants = GetParticipantsForStartup(startupIDForProcedure);
+            s.Category = "2";
             startupID++;
+            s.Participants = GetParticipantsForStartup(startupIDForProcedure);
             startups.Add(s);
         }
 
