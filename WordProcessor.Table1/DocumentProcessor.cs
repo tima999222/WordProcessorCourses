@@ -66,6 +66,20 @@ namespace ASTepanov.Docx
             });
         }
 
+        public void MapErrorCounters(string name, int? count)
+        {
+            if (count != null)
+            {
+                var propKey = $"{name}"; //ключ для замены
+
+                ProcessText(p =>
+                {
+                    if (p.InnerText.Contains(propKey))
+                        p.Text = p.Text.Replace(propKey, count.ToString());
+                });
+            }
+        }
+
         /// <summary>
         ///     Обойти все дерево документа с заданным действием к нему
         /// </summary>
@@ -243,7 +257,7 @@ namespace ASTepanov.Docx
                         {
                             partCount = 0;
                         }
-                        
+
                         if (partCount != 0)
                         {
                             foreach (var participant in startup.Participants)

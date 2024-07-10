@@ -41,13 +41,21 @@ namespace WordProcessor.Table1
                         var docProcessor = new DocumentProcessor(docTemplate);
                         var fileName = $"Таблицы-{d.Key}".Replace("/", "_");
                         docProcessor.Map(d.First());
+                        
+                        //Dupe Counters
+                        docProcessor.MapErrorCounters("COUNT1", d.First().Error1.Count(e => e.Reason == "Выявлено дублирование" || e.Reason == "Участие обучившегося в мероприятиях АП не подтверждается в данных Leader-ID; Выявлено дублирование"));
+                        docProcessor.MapErrorCounters("COUNT2", d.First().Error2.Count(e => e.Reason == "Выявлено дублирование" || e.Reason == "Количество участников мероприятия равно 0; Выявлено дублирование"));
+                        
                         docProcessor.MapItems(d.First().TrainedStudents, 2);
                         docProcessor.MapItems(d.First().Events, 2);
                         
                         //Error Tables
                         docProcessor.MapItems(d.First().Error1, 3);
+                        docProcessor.MapItems(d.First().Error2, 3);
                         
                         docProcessor.MapItemsOther(d.First().Startups, 3);
+                        
+                      
 
                         var fileInArchive = archive.CreateEntry(fileName + ".docx", CompressionLevel.Optimal);
                         using (var entryStream = fileInArchive.Open())

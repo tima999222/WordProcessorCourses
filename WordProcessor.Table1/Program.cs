@@ -19,6 +19,7 @@ namespace WordProcessor.Table1
 
             IEnumerable<string> contracts =
             [
+                #region Important
                 "70-2023-000670",
                 "70-2023-000622",
                 "70-2023-000669",
@@ -55,10 +56,81 @@ namespace WordProcessor.Table1
                 "70-2023-000668",
                 "70-2023-000679",
                 "70-2023-000694",
+                "70-2023-000695",
                 "70-2023-000696",
                 "70-2023-000697",
                 "70-2023-000719",
-                "70-2023-000768"
+                "70-2023-000768",
+            
+                
+                "70-2023-000647",
+                "70-2023-000648"
+                #endregion
+                #region Not Important
+                /*"70-2023-000618",
+                "70-2023-000619",
+                "70-2023-000623",
+                "70-2023-000624",
+                "70-2023-000625",
+                "70-2023-000627",
+                "70-2023-000628",
+                "70-2023-000629",
+                "70-2023-000633",
+                "70-2023-000634",
+                
+                "70-2023-000636",
+                "70-2023-000637",
+                "70-2023-000638",
+                "70-2023-000641",
+                "70-2023-000642",
+                "70-2023-000643",
+                "70-2023-000646",
+                "70-2023-000661",
+                "70-2023-000686",
+                "70-2023-000687",
+                
+                "70-2023-000688",
+                "70-2023-000689",
+                "70-2023-000690",
+                "70-2023-000698",
+                "70-2023-000700",
+                "70-2023-000701",
+                "70-2023-000702",
+                "70-2023-000703",
+                "70-2023-000704",
+                
+                "70-2023-000706",
+                "70-2023-000707",
+                "70-2023-000708",
+                "70-2023-000710",
+                "70-2023-000711",
+                "70-2023-000712",
+                "70-2023-000716",
+                
+                "70-2023-000720",
+                "70-2023-000722",
+                "70-2023-000723",
+                "70-2023-000726",
+                "70-2023-000728",
+                "70-2023-000729",
+                "70-2023-000730",
+                "70-2023-000732",
+                "70-2023-000733",
+                "70-2023-000734",
+                
+                "70-2023-000735",
+                "70-2023-000737",
+                "70-2023-000738",
+                "70-2023-000741",
+                "70-2023-000742",
+                "70-2023-000743",
+                "70-2023-000744",
+                "70-2023-000746",
+                "70-2023-000747",
+                "70-2023-000748",*/
+                
+                
+                #endregion
             ];
 
             foreach (var contractsChunk in SplitIntoChunks(contracts, 3))
@@ -69,7 +141,8 @@ namespace WordProcessor.Table1
                     Thread.Sleep(5000);
                 });
             }
-            //fillContract("70-2023-000678", logger);
+            
+           // fillContract("70-2023-000628", logger);
         }
 
         static Logger ConfigureLogger()
@@ -93,7 +166,7 @@ namespace WordProcessor.Table1
         {
             logger.Information("Trying to get data from database for contract with number [{contractNumber}]",
                 contractNumber);
-            List<DataForWord> dataFromDB = null;//GetDataFromDatabase(contractNumber, logger);
+            List<DataForWord> dataFromDB = GetDataFromDatabase(contractNumber, logger);
 
 
             List<DataForWord> testData = null;
@@ -123,7 +196,7 @@ namespace WordProcessor.Table1
                     if (result != null)
                     {
                         foreach (var data in groupedData)
-                            logger.Information("File [Таблицы-{contractNumber}] added to archive", data.Key + ".docx");
+                            logger.Information("File [{contractNumber}] added to archive", "Таблицы-" + data.Key + ".docx");
                     }
                 }
             }
@@ -224,10 +297,26 @@ namespace WordProcessor.Table1
                         Comment = GenerateRandomString(random.Next(1, 100))
                     });
                 }
+                
+                var errors2 = new List<ErrorTable2>();
+                for (int n = 0; n < random.Next(1, 10); n++)
+                {
+                    var leaderIDNumber = random.Next(1000, 9999);
+                    errors2.Add(new ErrorTable2()
+                    {
+                        Number = (n + 1).ToString(),
+                        Name = $"Student-{leaderIDNumber}",
+                        Link = $"https://leader-id.ru/users/{leaderIDNumber}",
+                        Reason = GenerateRandomString(random.Next(1, 100)),
+                        Documents = GenerateRandomString(random.Next(1, 100)),
+                        Remark = GenerateRandomString(random.Next(1, 100)),
+                        Comment = GenerateRandomString(random.Next(1, 100))
+                    });
+                }
 
                 logger.Information("Generated [{count}] errors for table 1", errors1.Count);
 
-                dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups, errors1));
+                dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups, errors1, errors2));
             }
 
             return dataList;
@@ -241,6 +330,7 @@ namespace WordProcessor.Table1
             var startups = new List<Startup>();
 
             var errors1 = new List<ErrorTable1>();
+            var errors2 = new List<ErrorTable2>();
 
 
             logger.Information("Getting participants...");
@@ -252,12 +342,16 @@ namespace WordProcessor.Table1
             logger.Information("Getting errors in Table 1...");
             //errors1 = Connection.GetErrors1ForContract(contractNumber);
             errors1 = Connection.GetErrorsForContract(contractNumber);
-            logger.Information("Got [{count}] errors for contract [{c}]", errors1.Count, contractNumber);
+            logger.Information("Got [{count}] errors in table 1 for contract [{c}]", errors1.Count, contractNumber);
 
             logger.Information("Getting events...");
             //events = Connection.GetEventsForContract(contractNumber);
             events = Connection.GetNewTable2ForContract(contractNumber);
             logger.Information("Got data about [{count}] events for contract [{c}]", events.Count, contractNumber);
+            
+            logger.Information("Getting errors in Table 2...");
+            errors2 = Connection.GetErrors2ForContract(contractNumber);
+            logger.Information("Got [{count}] errors in table 2 for contract [{c}]", errors2.Count, contractNumber);
 
             logger.Information("Getting startups...");
             startups = Connection.GetStartupsForContract(contractNumber);
@@ -266,6 +360,11 @@ namespace WordProcessor.Table1
             if (!errors1.Any() && errors1.Count() == 0)
             {
                 errors1.Add(new ErrorTable1());
+            }
+            
+            if (!errors2.Any() && errors2.Count() == 0)
+            {
+                errors2.Add(new ErrorTable2());
             }
 
             if (!trainedStudents.Any() && trainedStudents.Count() == 0)
@@ -283,7 +382,7 @@ namespace WordProcessor.Table1
                 startups.Add(new Startup());
             }
 
-            dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups, errors1));
+            dataList.Add(new DataForWord(contractNumber, trainedStudents, events, startups, errors1, errors2));
 
             return dataList;
         }

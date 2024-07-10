@@ -245,6 +245,50 @@ public static class Connection
         return participants;
     }
     
+    public static List<ErrorTable2> GetErrors2ForContract(string contractID)
+    {
+        List<ErrorTable2> events = new List<ErrorTable2>();
+
+        string cmdString = "GetEventsWithErrors";
+
+        SqlConnection con = new SqlConnection(conString);
+
+        SqlCommand cmd = new SqlCommand(cmdString, con);
+
+        cmd.CommandType = CommandType.StoredProcedure;
+        
+        SqlParameter idParam = new SqlParameter
+        {
+            ParameterName = "@id",
+            Value = contractID
+        };
+        cmd.Parameters.Add(idParam);
+        
+        con.Open();
+
+        SqlDataReader reader = cmd.ExecuteReader();
+
+        var errorID = 1;
+        
+        while (reader.Read())
+        {
+            ErrorTable2 p = new ErrorTable2();
+            p.Number = errorID.ToString();
+            p.Name = reader[0].ToString();
+            p.Link = reader[1].ToString();
+            p.Reason = reader[2].ToString();
+            p.Documents = "-";
+            p.Remark = "-";
+            p.Comment = "-";
+            errorID++;
+            events.Add(p);
+        }
+
+        con.Close();
+        
+        return events;
+    }
+    
     public static List<ErrorTable1> GetErrorsForContract(string contractID)
     {
         List<ErrorTable1> participants = new List<ErrorTable1>();
