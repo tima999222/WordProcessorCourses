@@ -68,16 +68,18 @@ namespace ASTepanov.Docx
 
         public void MapErrorCounters(string name, int? count)
         {
-            if (count != null)
+            if (count == null)
             {
-                var propKey = $"{name}"; //ключ для замены
-
-                ProcessText(p =>
-                {
-                    if (p.InnerText.Contains(propKey))
-                        p.Text = p.Text.Replace(propKey, count.ToString());
-                });
+                count = 0;
             }
+
+            var propKey = $"{name}"; //ключ для замены
+
+            ProcessText(p =>
+            {
+                if (p.InnerText.Contains(propKey))
+                    p.Text = p.Text.Replace(propKey, count.ToString());
+            });
         }
 
         /// <summary>
