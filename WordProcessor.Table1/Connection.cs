@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using DocumentFormat.OpenXml.Bibliography;
 using Microsoft.Data.SqlClient;
 using WordProcessor.Table1.Entities;
 
@@ -41,7 +42,7 @@ public static class Connection
             s.Name = string.IsNullOrEmpty(reader[0].ToString()) ? "-" : reader[0].ToString() ?? "-";
             s.Link = string.IsNullOrEmpty(reader[1].ToString()) ? "-" : reader[1].ToString() ?? "-";
             s.DupeCount = reader[2].ToString() ?? 0.ToString();
-            s.HasSign = "";
+            s.HasSign = "да";
             s.Category = "2";
             
             var startupIDForProcedure = GetStartupByLink(s.Link, contractNumber);
@@ -122,11 +123,11 @@ public static class Connection
         while (reader.Read())
         {
             TrainedStudent p = new TrainedStudent();
-            p.Number = studentID;
-            p.LeaderId = Convert.ToInt64(reader[0]);
+            p.Number = studentID.ToString();
+            p.LeaderId = string.IsNullOrEmpty(reader[0].ToString()) ? "" : reader[0].ToString() ?? "";
             p.FIO = string.IsNullOrEmpty(reader[1].ToString()) ? "-" : reader[1].ToString() ?? "-";
             p.EventsId = string.IsNullOrEmpty(reader[2].ToString()) ? "-" : reader[2].ToString() ?? "-";
-            p.Count = Convert.ToInt32(reader[3]);
+            p.Count = string.IsNullOrEmpty(reader[3].ToString()) ? "" : reader[3].ToString() ?? "";
             p.StartUp = string.IsNullOrEmpty(reader[4].ToString()) ? "-" : reader[4].ToString() ?? "-";
             p.Link = string.IsNullOrEmpty(reader[5].ToString()) ? "-" : reader[5].ToString() ?? "-";
             studentID++;
@@ -135,6 +136,18 @@ public static class Connection
 
         con.Close();
 
+        foreach (var p in participants)
+        {
+            if (p.FIO == '-'.ToString())
+            {
+                var name = GetStudentByID(p.LeaderId.ToString(), contractID);
+                if (name != "#Н/Д")
+                {
+                    p.FIO = name;
+                }
+            }
+        }
+        
         return participants;
     }
 
@@ -304,7 +317,7 @@ public static class Connection
                 ? "-"
                 : Convert.ToDateTime(reader[3]).ToString("dd.MM.yyyy HH:mm");
             e.Format = string.IsNullOrEmpty(reader[4].ToString()) ? "-" : reader[4].ToString() ?? "-";
-            e.CountOfParticipants = string.IsNullOrEmpty(reader[5].ToString()) ? 0 : Convert.ToInt64(reader[5]);
+            e.CountOfParticipants = string.IsNullOrEmpty(reader[5].ToString()) ? 0.ToString() : reader[5].ToString();
             e.LeaderIdNumber = string.IsNullOrEmpty(reader[6].ToString()) ? "-" : reader[6].ToString() ?? "-";
             events.Add(e);
         }
@@ -318,7 +331,7 @@ public static class Connection
             })
             .Select((e, index) =>
             {
-                e.Number = index + 1;
+                e.Number = (index + 1).ToString();
                 return e;
             })
             .ToList();
@@ -356,6 +369,74 @@ public static class Connection
         con.Close();
 
         return startupID;
+    }
+    
+    public static string GetStudentByID(string lid, string contractID)
+    {
+        string cmdString = "GetStudentByID";
+
+        SqlConnection con = new SqlConnection(conString);
+
+        SqlCommand cmd = new SqlCommand(cmdString, con);
+
+        cmd.CommandType = CommandType.StoredProcedure;
+
+        SqlParameter idParam = new SqlParameter
+        {
+            ParameterName = "@id",
+            Value = contractID
+        };
+        cmd.Parameters.Add(idParam);
+
+        SqlParameter lParam = new SqlParameter
+        {
+            ParameterName = "@lid",
+            Value = lid
+        };
+        cmd.Parameters.Add(lParam);
+
+        con.Open();
+
+       
+        var name = cmd.ExecuteScalar() ?? "";
+        
+        con.Close();
+
+        return name.ToString();
+    }
+    
+    public static string GetEventByID(string eid, string contractID)
+    {
+        string cmdString = "GetEventByID";
+
+        SqlConnection con = new SqlConnection(conString);
+
+        SqlCommand cmd = new SqlCommand(cmdString, con);
+
+        cmd.CommandType = CommandType.StoredProcedure;
+
+        SqlParameter idParam = new SqlParameter
+        {
+            ParameterName = "@id",
+            Value = contractID
+        };
+        cmd.Parameters.Add(idParam);
+
+        SqlParameter eParam = new SqlParameter
+        {
+            ParameterName = "@eid",
+            Value = eid
+        };
+        cmd.Parameters.Add(eParam);
+
+        con.Open();
+
+       
+        var name = cmd.ExecuteScalar() ?? "";
+        
+        con.Close();
+
+        return name.ToString();
     }
 
     public static bool CheckIfHasGoodParticipants(string contractID, string link)

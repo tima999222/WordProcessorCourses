@@ -43,13 +43,29 @@ namespace WordProcessor.Table1
                         docProcessor.Map(d.First());
                         
                         //Dupe Counters
-                        docProcessor.MapErrorCounters("COUNT1", d.First().Error1.Count(e => e.Reason == "Выявлено дублирование" || e.Reason == "Участие обучившегося в мероприятиях АП не подтверждается в данных Leader-ID; Выявлено дублирование"));
-                        docProcessor.MapErrorCounters("COUNT2", d.First().Error2.Count(e => e.Reason == "Выявлено дублирование" || e.Reason == "Количество участников мероприятия равно 0; Выявлено дублирование"));
-                        
                         var firstItem = d.FirstOrDefault();
-                        if (firstItem != null && firstItem.Error3 != null)
+                        
+                        if (firstItem != null && firstItem.Error1.Any())
                         {
-                            docProcessor.MapErrorCounters("COUNT", firstItem.Error3.Count(e => e.Reason != null && e.Reason.Contains("Выявлено дублирование")));
+                            docProcessor.MapErrorCounters("COUNT1", firstItem.Error1.Count(e => e.Reason.Contains("дублирование")));
+                        }
+                        else
+                        {
+                            docProcessor.MapErrorCounters("COUNT1", 0);
+                        }
+                        
+                        if (firstItem != null && firstItem.Error2.Any())
+                        {
+                            docProcessor.MapErrorCounters("COUNT2", firstItem.Error2.Count(e => e.Reason.Contains("дублируется")));
+                        }
+                        else
+                        {
+                            docProcessor.MapErrorCounters("COUNT2", 0);
+                        }
+                        
+                        if (firstItem != null && firstItem.Error3.Any())
+                        {
+                            docProcessor.MapErrorCounters("COUNT", firstItem.Error3.Count(e => e.Reason != null && e.Reason.Contains("дублирование")));
                         }
                         else
                         {
