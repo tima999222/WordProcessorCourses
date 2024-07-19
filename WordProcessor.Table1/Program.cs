@@ -154,16 +154,16 @@ namespace WordProcessor.Table1
                 #endregion
             ];
 
-            foreach (var contractsChunk in SplitIntoChunks(contracts, 3))
+            /*foreach (var contractsChunk in SplitIntoChunks(contracts, 3))
             {
                 Parallel.ForEach(contractsChunk, contract =>
                 {
                     fillContract(contract, logger);
                     Thread.Sleep(3000);
                 });
-            }
+            }*/
 
-            //fillContract("70-2023-000629", logger);
+            fillContract("70-2023-000667", logger);
         }
 
         static Logger ConfigureLogger()
@@ -265,7 +265,13 @@ namespace WordProcessor.Table1
                 if (e.Reason.Contains("Выявлено дублирование"))
                 {
                     e.Reason = e.Reason.Replace("Выявлено дублирование",
-                        "Выявлено дублирование ФИО и/или ID участников");
+                        "Выявлено дублирование ID участников");
+                }
+                
+                if (e.Reason.Contains("фамилия"))
+                {
+                    e.Reason = e.Reason.Replace("фамилия",
+                        "Выявлено дублирование ФИО участников");
                 }
             }
 
@@ -280,7 +286,7 @@ namespace WordProcessor.Table1
                         "Необходимо предоставить документы, подтверждающие участие обучившегося в мероприятиях АП, проведение которых подтверждено. Такими документами может являться, в том числе, протокол мероприятия за подписью уполномоченного лица с поименным списком участников мероприятия, поименный список регистрации участников мероприятия с оригинальными подписями, в котором указан в том числе данный обучившийся. В дополнение к указанными документам могут прикладываться новости, подтверждающие проведение мероприятия с участием данного обучившегося (с указанием ссылки на источник и предоставлением скриншота публикации), скриншоты, подтверждающие проведение мероприятия в формате онлайн с участием данного обучившегося, фотоотчеты с мероприятия, иные документы и материалы, которые позволяют подтвердить факт участия обучившегося в мероприятиях АП.\nНаправляемые документы должны сопровождаться письмом за подписью ректора, либо уполномоченного лица с подтверждением полномочий подписанта, в котором подтверждается участие обучившегося в мероприятиях АП.");
                 }
 
-                if (e.Reason.Contains("Выявлено дублирование ФИО и/или ID участников"))
+                if (e.Reason.Contains("Выявлено дублирование ID участников") || e.Reason.Contains("Выявлено дублирование ФИО участников"))
                 {
                     docList.Add(
                         "Необходимо исключить дублирование в доработанной отчетной документации. Направляемый доработанный отчет о ходе реализации акселерационной программы (по форме приложения \u2116 6 к договору о предоставлении гранта) должен сопровождаться письмом за подписью ректора, либо уполномоченного лица с подтверждением полномочий подписанта, в котором даются пояснения по выявленному замечанию, с приложением дополнительных подтверждающих материалов, в случае, если дублирование отсутствует, либо подтверждается исключение дублирования из отчетных материалов.");
@@ -311,7 +317,48 @@ namespace WordProcessor.Table1
 
             var badEvents = events.Where(e => e.DateStart.Contains("2019"));
 
+            var badEvents0 = new List<Event>();
+            
+            var eventsToError = new List<ErrorTable2>();
+
+            var studentIDs = trainedStudents.Select(s => s.LeaderId).ToList();
+
+            foreach (var e in events)
+            {
+                var badCount = 0;
+                var eIDs = e.LeaderIdNumber.Replace(" ", "").Split(',').ToList();
+
+                if (eIDs.Any())
+                {
+
+                    foreach (var sid in eIDs)
+                    {
+                        if (!studentIDs.Contains(sid))
+                        {
+                            badCount++;
+                        }
+                    }
+
+                    if (badCount == eIDs.Count())
+                    {
+                        badEvents0.Add(e);
+                        eventsToError.Add(new ErrorTable2
+                        {
+                            Number = 0.ToString(),
+                            Name = e.Name,
+                            Link = e.Link,
+                            Reason =
+                                "Количество участников мероприятия равно \"0\" (по данным ИС \"Leader-ID\", посетители мероприятий не входят в список участников АП)",
+                            Documents = "-",
+                            Remark = "-",
+                            Comment = "-"
+                        });
+                    }
+                }
+            }
+
             events = events.Except(badEvents).ToList();
+            events = events.Except(badEvents0).ToList();
 
             var eventID = 1;
 
@@ -326,14 +373,13 @@ namespace WordProcessor.Table1
             logger.Information("Getting errors in Table 2...");
             errors2 = Connection.GetErrors2ForContract(contractNumber);
 
-            var err2ID = errors2.Count();
+            var err2ID = 1;
 
             foreach (var e in badEvents)
             {
-                err2ID++;
                 errors2.Add(new ErrorTable2
                 {
-                    Number = err2ID.ToString(),
+                    Number = 0.ToString(),
                     Name = e.Name,
                     Link = e.Link,
                     Reason = "Дата проведения мероприятия вне рамок отчетного периода",
@@ -343,6 +389,17 @@ namespace WordProcessor.Table1
                 });
             }
 
+            foreach (var e in eventsToError)
+            {
+                errors2.Add(e);
+            }
+
+            foreach (var e in errors2)
+            {
+                e.Number = err2ID.ToString();
+                err2ID++;
+            }
+
             foreach (var e in errors2)
             {
                 if (e.Reason.Contains("Выявлено дублирование"))
@@ -350,13 +407,19 @@ namespace WordProcessor.Table1
                     e.Reason = e.Reason.Replace("Выявлено дублирование",
                         "Мероприятие дублируется (не подтверждено как уникальное)");
                 }
+                
+                if (e.Reason.Contains("Количество участников мероприятия равно 0"))
+                {
+                    e.Reason = e.Reason.Replace("Количество участников мероприятия равно 0",
+                        "Количество участников мероприятия равно \"0\" (по данным ИС \"Leader-ID\", кол-во участников 0)");
+                }
             }
 
             foreach (var e in errors2)
             {
                 var docList = new List<string>();
 
-                if (e.Reason.Contains("Количество участников мероприятия равно 0"))
+                if (e.Reason.Contains("Количество участников мероприятия равно \"0\""))
                 {
                     docList.Add(
                         "Необходимо предоставить документы, подтверждающие проведение мероприятия АП, на котором присутствовали обучившиеся по данной АП, с указанием темы, места и времени проведения, перечня присутствовавших на мероприятии участников.\nТакими документами может являться, в том числе, протокол мероприятия за подписью уполномоченного лица с поименным списком участников мероприятия, поименный список регистрации участников мероприятия с   подписями. В дополнение к указанными документам могут прикладываться новости, подтверждающие проведение мероприятия (с указанием ссылки на источник и предоставлением скриншота публикации), скриншоты, подтверждающие проведение мероприятия в формате онлайн, фотоотчеты с мероприятия, иные документы и материалы, которые позволяют подтвердить факт проведения мероприятия.\nНаправляемые документы должны сопровождаться письмом за подписью ректора, либо уполномоченного лица с подтверждением полномочий подписанта, в котором подтверждается проведение мероприятий в рамках Плана реализации АП, на котором присутствовали обучившиеся по данной АП, с указанием темы, места и времени проведения.");
@@ -426,7 +489,33 @@ namespace WordProcessor.Table1
 
             badStartups = badStartups.OrderBy(s => s.Link).ToList();
 
+            var startupsToErrors = new List<Startup>();
+            
+            foreach (var s in startups)
+            {
+                var badCount = 0;
+                var sIDs = s.Participants.Select(p => p.LeaderID).ToList();
+                    
+                if (sIDs.Any())
+                {
+
+                    foreach (var sid in sIDs)
+                    {
+                        if (!studentIDs.Contains(sid))
+                        {
+                            badCount++;
+                        }
+                    }
+
+                    if (badCount == sIDs.Count())
+                    {
+                        startupsToErrors.Add(s);
+                    }
+                }
+            }
+
             startups = startups.Except(badStartups).ToList();
+            startups = startups.Except(startupsToErrors).ToList();
 
             var startupNum = 1;
             foreach (var startup in startups)
@@ -517,6 +606,24 @@ namespace WordProcessor.Table1
                 });
             }
 
+            foreach (var s in startupsToErrors)
+            {
+                var links = errors3.Select(e => e.Link).ToList();
+                if (!links.Contains(s.Link))
+                {
+                    errors3.Add(new ErrorTable3
+                    {
+                        Number = 0.ToString(),
+                        Name = s.Name,
+                        Link = s.Link,
+                        Reason = "Отсутствие в составе команды стартап-проекта обучившихся по соответствующей АП",
+                        Documents = "",
+                        Remark = "",
+                        Comment = ""
+                    });
+                }
+            }
+
             foreach (var err in errors3)
             {
                 var isGood = Connection.CheckIfHasGoodParticipants(contractNumber, err.Link);
@@ -552,14 +659,6 @@ namespace WordProcessor.Table1
             }
 
             errors3 = errors3.Except(errorsToRemove).ToList();
-
-            var errNum = 0;
-
-            foreach (var err in errors3)
-            {
-                errNum++;
-                err.Number = errNum.ToString();
-            }
 
             foreach (var e in errors3)
             {
@@ -611,6 +710,14 @@ namespace WordProcessor.Table1
             }
 
             errors3 = errors3.OrderBy(e => e.Link).ThenBy(e => e.Reason).ToList();
+            
+            var errNum = 0;
+
+            foreach (var err in errors3)
+            {
+                errNum++;
+                err.Number = errNum.ToString();
+            }
 
             logger.Information("Got [{count}] errors in table 3 for contract [{c}]", errors3.Count, contractNumber);
             if (!errors1.Any() && errors1.Count() == 0)
