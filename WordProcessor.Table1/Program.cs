@@ -57,7 +57,7 @@ namespace WordProcessor.Table1
                 //"70-2023-000693",
 
                 //"70-2023-000668",
-                //70-2023-000679",
+                //"70-2023-000679",
                 //"70-2023-000694",
                 //"70-2023-000695",
                 //"70-2023-000696",
@@ -118,11 +118,11 @@ namespace WordProcessor.Table1
                 //"70-2023-000723",
                 //"70-2023-000726",
                 "70-2023-000728",
-                "70-2023-000729",
-                "70-2023-000730",
+                //"70-2023-000729",
+                //"70-2023-000730",
                 //"70-2023-000732",
                 //"70-2023-000733",
-                "70-2023-000734",
+                //"70-2023-000734",
 
                 //"70-2023-000735",
                 //"70-2023-000737",
@@ -143,13 +143,13 @@ namespace WordProcessor.Table1
                 //"70-2023-000758",
                 //"70-2023-000761",
                 //"70-2023-000762",
-                "70-2023-000765",
+                //"70-2023-000765",
                 "70-2023-000774",
                 "70-2023-000775",
 
-                "70-2023-000736",
+                //"70-2023-000736",
                 "70-2023-000770",
-                "70-2023-000771"
+                //"70-2023-000771"
 
                 #endregion
             ];
@@ -592,9 +592,11 @@ namespace WordProcessor.Table1
                 }
             }
 
+            var errorsToAdd = new List<ErrorTable3>();
+            
             foreach (var startup in dupeStartups)
             {
-                errors3.Add(new ErrorTable3
+                errorsToAdd.Add(new ErrorTable3
                 {
                     Number = 0.ToString(),
                     Name = startup.Name,
@@ -605,6 +607,20 @@ namespace WordProcessor.Table1
                     Comment = ""
                 });
             }
+
+            var errorsToExclude = new List<ErrorTable3>();
+            
+            foreach (var e in errorsToAdd)
+            {
+                if (errors3.Where(err => err.Link == e.Link && err.Link != "Выявлено дублирование").ToList().Any())
+                {
+                    errorsToExclude.Add(e);
+                }
+            }
+
+            errorsToAdd = errorsToAdd.Except(errorsToExclude).ToList();
+            
+            errors3.AddRange(errorsToAdd);
 
             foreach (var s in startupsToErrors)
             {
@@ -643,18 +659,23 @@ namespace WordProcessor.Table1
 
                 foreach (var startup in startups)
                 {
-                    if (startup.Link == err.Link
-                        && err.Reason ==
-                        "Статус проекта в акселераторе по данным в ИС «Projects»: «Проходит акселерацию» (или иной статус отличный от \"Завершено успешно\"); Выявлено дублирование")
-                    {
-                        if (!errorsToRemove.Contains(err))
-                            errorsToRemove.Add(err);
-                    }
-
                     if (startup.Link == err.Link && !err.Reason.Contains("Выявлено дублирование"))
                     {
                         errorsToRemove.Add(err);
                     }
+                }
+                
+                foreach (var startup in startups)
+                {
+                    var pToRemove = new List<Participant>();
+                    foreach (var p in startup.Participants)
+                    {
+                        if (!trainedStudents.Where(s => s.LeaderId == p.LeaderID).ToList().Any())
+                        {
+                            pToRemove.Add(p);
+                        }
+                    }
+                    startup.Participants = startup.Participants.Except(pToRemove).ToList();
                 }
             }
 
