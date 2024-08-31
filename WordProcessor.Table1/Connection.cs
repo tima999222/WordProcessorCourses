@@ -1,5 +1,6 @@
 ﻿using System.Data;
-using DocumentFormat.OpenXml.Bibliography;
+using System.Reflection;
+using AStepanov.Core.Ex;
 using Microsoft.Data.SqlClient;
 using WordProcessor.Table1.Entities;
 
@@ -7,9 +8,9 @@ namespace WordProcessor.Table1;
 
 public static class Connection
 {
-    public static string conString =
-        @"Data Source=.\SQLEXPRESS; Initial Catalog=FilesDatabase; Integrated Security=true; TrustServerCertificate=True;";
+    public static string path = Path.Combine(Assembly.GetExecutingAssembly().Directory(), "config.txt");
 
+    public static string conString = File.ReadAllText(path);
     public static List<Startup> GetStartupsForContract(string contractNumber)
     {
         List<Startup> startups = new List<Startup>();
