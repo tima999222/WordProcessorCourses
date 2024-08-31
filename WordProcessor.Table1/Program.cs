@@ -1,8 +1,6 @@
 ﻿using AStepanov.Core.Ex;
 using System.Reflection;
-using DocumentFormat.OpenXml.Math;
 using Microsoft.IdentityModel.Tokens;
-using WordProcessor.Table1;
 using WordProcessor.Table1.Entities;
 using Serilog;
 using Serilog.Core;
@@ -19,151 +17,21 @@ namespace WordProcessor.Table1
         {
             logger.Information("Starting Up");
 
-            IEnumerable<string> contracts =
-            [
-                #region Important
+            Console.WriteLine("Enter contract numbers like this: 00-0000-000000,11-1111-111111,22-2222-222222");
 
-                //"70-2023-000670",
-                //"70-2023-000622",
-                //"70-2023-000669",
-                //"70-2023-000620",
-                //"70-2023-000672",
-                //"70-2023-000677",
-                //"70-2023-000678",
-                //"70-2023-000671",
-                //"70-2023-000621",
-                //"70-2023-000673",
+            var userInput = Console.ReadLine();
+            
+            IEnumerable<string> contracts = userInput.Split(',');
 
-                //"70-2023-000626",
-                //"70-2023-000644",
-                //"70-2023-000645",
-                //"70-2023-000650",
-                //"70-2023-000651",
-                //"70-2023-000655",
-                //"70-2023-000662",
-                //"70-2023-000663",
-                //"70-2023-000664",
-                //"70-2023-000667",
-
-                //"70-2023-000665",
-                //"70-2023-000680",
-                //"70-2023-000681",
-                //"70-2023-000682",
-                //"70-2023-000683",
-                //"70-2023-000684",
-                //"70-2023-000685",
-                //"70-2023-000691",
-                //"70-2023-000692",
-                //"70-2023-000693",
-
-                //"70-2023-000668",
-                //"70-2023-000679",
-                //"70-2023-000694",
-                //"70-2023-000695",
-                //"70-2023-000696",
-                //"70-2023-000697",
-                //"70-2023-000719",
-                //"70-2023-000768",
-
-
-                //"70-2023-000647",
-                //"70-2023-000648"
-
-                #endregion
-
-                #region Not Important
-
-                //"70-2023-000618",
-                //"70-2023-000619",
-                //"70-2023-000623",
-                //"70-2023-000624",
-                //"70-2023-000625",
-                //"70-2023-000627",
-                //"70-2023-000628",
-                "70-2023-000629",
-                //"70-2023-000633",
-                //"70-2023-000634",
-
-                //"70-2023-000636",
-                //"70-2023-000637",
-                //"70-2023-000638",
-                //"70-2023-000641",
-                //"70-2023-000642",
-                //"70-2023-000643",
-                //"70-2023-000646",
-                //"70-2023-000661",
-                //"70-2023-000686",
-                //"70-2023-000687",
-
-                //"70-2023-000688",
-                //"70-2023-000689",
-                //"70-2023-000690",
-                //"70-2023-000698",
-                //"70-2023-000700",
-                //"70-2023-000701",
-                //"70-2023-000702",
-                //"70-2023-000703",
-                //"70-2023-000704",
-
-                //"70-2023-000706",
-                //"70-2023-000707",
-                //"70-2023-000708",
-                //"70-2023-000710",
-                //"70-2023-000711",
-                //"70-2023-000712",
-                //"70-2023-000716",
-
-                //"70-2023-000720",
-                //"70-2023-000722",
-                //"70-2023-000723",
-                //"70-2023-000726",
-                "70-2023-000728",
-                //"70-2023-000729",
-                //"70-2023-000730",
-                //"70-2023-000732",
-                //"70-2023-000733",
-                //"70-2023-000734",
-
-                //"70-2023-000735",
-                //"70-2023-000737",
-                //"70-2023-000738",
-                //"70-2023-000741",
-                //"70-2023-000742",
-                //"70-2023-000743",
-                //"70-2023-000744",
-                //"70-2023-000746",
-                //"70-2023-000747",
-                //"70-2023-000748",
-
-                //"70-2023-000621"
-
-                //"70-2023-000752",
-                //"70-2023-000753",
-                //"70-2023-000757",
-                //"70-2023-000758",
-                //"70-2023-000761",
-                //"70-2023-000762",
-                //"70-2023-000765",
-                "70-2023-000774",
-                "70-2023-000775",
-
-                //"70-2023-000736",
-                "70-2023-000770",
-                //"70-2023-000771"
-
-                #endregion
-            ];
-
-            /*foreach (var contractsChunk in SplitIntoChunks(contracts, 3))
+            foreach (var contractsChunk in SplitIntoChunks(contracts, 3))
             {
                 Parallel.ForEach(contractsChunk, contract =>
                 {
                     fillContract(contract, logger);
                     Thread.Sleep(3000);
                 });
-            }*/
-
-            fillContract("70-2023-000667", logger);
+            }
+            
         }
 
         static Logger ConfigureLogger()
@@ -237,13 +105,11 @@ namespace WordProcessor.Table1
 
 
             logger.Information("Getting participants...");
-            //trainedStudents = Connection.GetParticipantsForContract(contractNumber);
             trainedStudents = Connection.GetNewTable1ForContract(contractNumber);
             logger.Information("Got data about [{count}] participants for contract [{c}]", trainedStudents.Count,
                 contractNumber);
 
             logger.Information("Getting errors in Table 1...");
-            //errors1 = Connection.GetErrors1ForContract(contractNumber);
             errors1 = Connection.GetErrorsForContract(contractNumber);
 
             foreach (var p in errors1)
@@ -267,7 +133,7 @@ namespace WordProcessor.Table1
                     e.Reason = e.Reason.Replace("Выявлено дублирование",
                         "Выявлено дублирование ID участников");
                 }
-                
+
                 if (e.Reason.Contains("фамилия"))
                 {
                     e.Reason = e.Reason.Replace("фамилия",
@@ -286,7 +152,8 @@ namespace WordProcessor.Table1
                         "Необходимо предоставить документы, подтверждающие участие обучившегося в мероприятиях АП, проведение которых подтверждено. Такими документами может являться, в том числе, протокол мероприятия за подписью уполномоченного лица с поименным списком участников мероприятия, поименный список регистрации участников мероприятия с оригинальными подписями, в котором указан в том числе данный обучившийся. В дополнение к указанными документам могут прикладываться новости, подтверждающие проведение мероприятия с участием данного обучившегося (с указанием ссылки на источник и предоставлением скриншота публикации), скриншоты, подтверждающие проведение мероприятия в формате онлайн с участием данного обучившегося, фотоотчеты с мероприятия, иные документы и материалы, которые позволяют подтвердить факт участия обучившегося в мероприятиях АП.\nНаправляемые документы должны сопровождаться письмом за подписью ректора, либо уполномоченного лица с подтверждением полномочий подписанта, в котором подтверждается участие обучившегося в мероприятиях АП.");
                 }
 
-                if (e.Reason.Contains("Выявлено дублирование ID участников") || e.Reason.Contains("Выявлено дублирование ФИО участников"))
+                if (e.Reason.Contains("Выявлено дублирование ID участников") ||
+                    e.Reason.Contains("Выявлено дублирование ФИО участников"))
                 {
                     docList.Add(
                         "Необходимо исключить дублирование в доработанной отчетной документации. Направляемый доработанный отчет о ходе реализации акселерационной программы (по форме приложения \u2116 6 к договору о предоставлении гранта) должен сопровождаться письмом за подписью ректора, либо уполномоченного лица с подтверждением полномочий подписанта, в котором даются пояснения по выявленному замечанию, с приложением дополнительных подтверждающих материалов, в случае, если дублирование отсутствует, либо подтверждается исключение дублирования из отчетных материалов.");
@@ -312,13 +179,13 @@ namespace WordProcessor.Table1
             logger.Information("Got [{count}] errors in table 1 for contract [{c}]", errors1.Count, contractNumber);
 
             logger.Information("Getting events...");
-            //events = Connection.GetEventsForContract(contractNumber);
+            
             events = Connection.GetNewTable2ForContract(contractNumber);
 
             var badEvents = events.Where(e => e.DateStart.Contains("2019"));
 
             var badEvents0 = new List<Event>();
-            
+
             var eventsToError = new List<ErrorTable2>();
 
             var studentIDs = trainedStudents.Select(s => s.LeaderId).ToList();
@@ -330,7 +197,6 @@ namespace WordProcessor.Table1
 
                 if (eIDs.Any())
                 {
-
                     foreach (var sid in eIDs)
                     {
                         if (!studentIDs.Contains(sid))
@@ -407,7 +273,7 @@ namespace WordProcessor.Table1
                     e.Reason = e.Reason.Replace("Выявлено дублирование",
                         "Мероприятие дублируется (не подтверждено как уникальное)");
                 }
-                
+
                 if (e.Reason.Contains("Количество участников мероприятия равно 0"))
                 {
                     e.Reason = e.Reason.Replace("Количество участников мероприятия равно 0",
@@ -490,15 +356,14 @@ namespace WordProcessor.Table1
             badStartups = badStartups.OrderBy(s => s.Link).ToList();
 
             var startupsToErrors = new List<Startup>();
-            
+
             foreach (var s in startups)
             {
                 var badCount = 0;
                 var sIDs = s.Participants.Select(p => p.LeaderID).ToList();
-                    
+
                 if (sIDs.Any())
                 {
-
                     foreach (var sid in sIDs)
                     {
                         if (!studentIDs.Contains(sid))
@@ -593,7 +458,7 @@ namespace WordProcessor.Table1
             }
 
             var errorsToAdd = new List<ErrorTable3>();
-            
+
             foreach (var startup in dupeStartups)
             {
                 errorsToAdd.Add(new ErrorTable3
@@ -609,7 +474,7 @@ namespace WordProcessor.Table1
             }
 
             var errorsToExclude = new List<ErrorTable3>();
-            
+
             foreach (var e in errorsToAdd)
             {
                 if (errors3.Where(err => err.Link == e.Link && err.Link != "Выявлено дублирование").ToList().Any())
@@ -619,7 +484,7 @@ namespace WordProcessor.Table1
             }
 
             errorsToAdd = errorsToAdd.Except(errorsToExclude).ToList();
-            
+
             errors3.AddRange(errorsToAdd);
 
             foreach (var s in startupsToErrors)
@@ -664,7 +529,7 @@ namespace WordProcessor.Table1
                         errorsToRemove.Add(err);
                     }
                 }
-                
+
                 foreach (var startup in startups)
                 {
                     var pToRemove = new List<Participant>();
@@ -675,6 +540,7 @@ namespace WordProcessor.Table1
                             pToRemove.Add(p);
                         }
                     }
+
                     startup.Participants = startup.Participants.Except(pToRemove).ToList();
                 }
             }
@@ -731,7 +597,7 @@ namespace WordProcessor.Table1
             }
 
             errors3 = errors3.OrderBy(e => e.Link).ThenBy(e => e.Reason).ToList();
-            
+
             var errNum = 0;
 
             foreach (var err in errors3)

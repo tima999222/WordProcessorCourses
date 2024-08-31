@@ -107,6 +107,8 @@ public static class Connection
 
         cmd.CommandType = CommandType.StoredProcedure;
 
+        cmd.CommandTimeout = 1000000;
+
         SqlParameter idParam = new SqlParameter
         {
             ParameterName = "@id",

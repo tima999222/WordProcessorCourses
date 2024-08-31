@@ -5,8 +5,6 @@ using DocumentFormat.OpenXml;
 using DocumentFormat.OpenXml.Packaging;
 using DocumentFormat.OpenXml.Wordprocessing;
 using WordProcessor.Table1.Entities;
-using Cell = DocumentFormat.OpenXml.Spreadsheet.Cell;
-using RowFields = DocumentFormat.OpenXml.Spreadsheet.RowFields;
 
 #endregion
 
@@ -81,6 +79,22 @@ namespace ASTepanov.Docx
                     p.Text = p.Text.Replace(propKey, count.ToString());
             });
         }
+        
+        public void MapErrorNames(string name, string? errName)
+        {
+            if (errName == null)
+            {
+                errName = "";
+            }
+
+            var propKey = $"{name}"; //ключ для замены
+
+            ProcessText(p =>
+            {
+                if (p.InnerText.Contains(propKey))
+                    p.Text = p.Text.Replace(propKey, errName);
+            });
+        }
 
         /// <summary>
         ///     Обойти все дерево документа с заданным действием к нему
@@ -143,29 +157,6 @@ namespace ASTepanov.Docx
             }
 
             //throw new NotImplementedException();
-        }
-
-        public void MapValuesPerTable<T>(T value)
-        {
-            Dictionary<string, object> properties = value.GetProperties();
-            var values = new Dictionary<string, string>();
-            foreach (var keyValuePair in properties)
-            {
-                var key = "{" + value.GetType().Name + "." + keyValuePair.Key + "}";
-                var empty = string.Empty;
-                if (keyValuePair.Value != null)
-                    empty = keyValuePair.Value?.ToString();
-                values.Add(key, empty);
-            }
-
-            ProcessText(o =>
-            {
-                foreach (var e in values)
-                {
-                    var innertext = o.InnerText;
-                    if (innertext.Contains(e.Key)) o.Text = o.Text.Replace(e.Key, e.Value);
-                }
-            });
         }
 
         public void MapItems<T>(IEnumerable<T> items, int rowSkips)
